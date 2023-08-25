@@ -3,5 +3,11 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "hardhat": "^2.17.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
+    "allo-v2": "github:allo-protocol/allo-v2",
+    "solady": "^0.0.113"
   }
 }
