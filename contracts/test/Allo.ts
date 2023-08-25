@@ -149,7 +149,5 @@ describe("Allo", function () {
       console.log("PoolOwner: setPoolActive");
       await strategy.connect(poolOwner).setPoolActive(false);
     });
-
-    it("Integration Test", async function () {});
   });
 });
