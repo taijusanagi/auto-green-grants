@@ -20,6 +20,15 @@ export default function Home() {
   const [teamDescription, setTeamDescription] = useState("");
   const [applicationId, setApplicationId] = useState("");
 
+  const [selectedTeamMember, setSelectedTeamMember] = useState("");
+  const [reviewDescription, setReviewDescription] = useState("");
+
+  const [referenceURL, setReferenceURL] = useState("");
+  const [peerReviews, setPeerReviews] = useState([
+    { reviewerName: "John Doe", description: "This is a great submission!" },
+    { reviewerName: "Jane Smith", description: "Looks good, but needs some edits." },
+  ]);
+
   const [submissionId, setSubmissionId] = useState("");
 
   const addTeamMember = () => {
@@ -54,12 +63,20 @@ export default function Home() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    if (role == "sponsor" && sponsorAction == "createGrant") {
-      moveToApplicant();
+    if (role == "sponsor") {
+      if (sponsorAction == "createGrant" || sponsorAction == "reviewApplication") {
+        moveToApplicant();
+      } else {
+        moveToSponsor();
+      }
     }
 
-    if (role == "applicant" && applicantAction == "applyForGrant") {
-      moveToSponsor();
+    if (role == "applicant") {
+      if (applicantAction == "applyForGrant" || applicantAction == "submitToGrant") {
+        moveToSponsor();
+      } else {
+        moveToApplicant();
+      }
     }
   };
 
@@ -180,7 +197,34 @@ export default function Home() {
                     ← Back
                   </button>
                   <h1 className="text-4xl font-semibold mb-6 text-white">Review Application</h1>
-                  {/* Add Review Team Form Here */}
+
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold text-white">Team Name:</h2>
+                    <p className="text-white">{teamName}</p>
+
+                    <h2 className="text-2xl font-semibold text-white">Team Members:</h2>
+                    <ul>
+                      {teamMembers.map((member, index) => (
+                        <li key={index} className="text-white">
+                          {member}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <h2 className="text-2xl font-semibold text-white">Team Description:</h2>
+                    <p className="text-white">{teamDescription}</p>
+
+                    <button
+                      className="w-full p-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                      onClick={() => {
+                        setModalTitle("Application Reviewed");
+                        setModalDescription("You've successfully reviewed the application!");
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      Confirm Review
+                    </button>
+                  </div>
                 </>
               )}
 
@@ -190,7 +234,71 @@ export default function Home() {
                     ← Back
                   </button>
                   <h1 className="text-4xl font-semibold mb-6 text-white">Review Submission</h1>
-                  {/* Add Review Submission Form Here */}
+
+                  {/* Review Submission Details */}
+                  <div className="space-y-6">
+                    {/* Display Team Name */}
+                    <div className="space-y-2">
+                      <h2 className="text-xl text-white">Team Name:</h2>
+                      <p className="text-white">{teamName}</p>
+                    </div>
+
+                    {/* Display All Team Members */}
+                    <div className="space-y-2">
+                      <h2 className="text-xl text-white">Team Members:</h2>
+                      <ul className="list-disc pl-5">
+                        {teamMembers.map((member, index) => (
+                          <li key={index} className="text-white">
+                            {member}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Display Team Description */}
+                    <div className="space-y-2">
+                      <h2 className="text-xl text-white">Team Description:</h2>
+                      <p className="text-white">{teamDescription}</p>
+                    </div>
+
+                    {/* Display Reference URL */}
+                    <div className="space-y-2">
+                      <h2 className="text-xl text-white">Reference URL:</h2>
+                      <a
+                        href={referenceURL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-600 underline"
+                      >
+                        {referenceURL}
+                      </a>
+                    </div>
+
+                    {/* Display List of Peer Reviews */}
+                    <div className="space-y-2">
+                      <h2 className="text-xl text-white">Peer Reviews:</h2>
+                      <ul className="list-disc pl-5">
+                        {peerReviews.map((review, index) => (
+                          <li key={index} className="text-white">
+                            <strong>{review.reviewerName}:</strong> {review.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Approve Button */}
+                    <button
+                      className="w-full p-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                      onClick={() => {
+                        // Handle approval logic here.
+                        setModalTitle("Submission Approved");
+                        setModalDescription("The submission has been approved successfully!");
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      Approve
+                    </button>
+                  </div>
                 </>
               )}
             </>
@@ -213,6 +321,13 @@ export default function Home() {
                   >
                     Apply for Grant
                   </button>
+
+                  <input
+                    value={applicationId}
+                    onChange={(e) => setApplicationId(e.target.value)}
+                    className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none mb-2"
+                    placeholder="Application ID"
+                  />
 
                   <button
                     className="w-full p-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
@@ -288,14 +403,54 @@ export default function Home() {
                   </div>
                 </>
               )}
-
               {applicantAction === "peerReview" && (
                 <>
                   <button className="mb-6 text-white" onClick={() => setApplicantAction("default")}>
                     ← Back
                   </button>
-                  <h1 className="text-4xl font-semibold mb-6 text-white">Peer Review for Grant ID: {grantId}</h1>
-                  {/* Add Peer Review Form Here */}
+                  <h1 className="text-4xl font-semibold mb-6 text-white">Peer Review</h1>
+
+                  {/* Peer Review Form */}
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-white mb-2">Select Team Member:</label>
+                      <select
+                        value={selectedTeamMember}
+                        onChange={(e) => setSelectedTeamMember(e.target.value)}
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                      >
+                        <option value="" disabled>
+                          Select a team member
+                        </option>
+                        {/* Assuming you have a list of team members, render them here */}
+                        {teamMembers.map((member) => (
+                          <option key={member} value={member}>
+                            {member}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <input
+                      value={reviewDescription}
+                      onChange={(e) => setReviewDescription(e.target.value)}
+                      placeholder="Review Description"
+                      className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                    />
+
+                    <button
+                      className="w-full p-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                      onClick={() => {
+                        // Here, you'd usually send the review data to your backend or process it accordingly.
+                        // For now, we'll just display a modal saying the review was submitted.
+                        setModalTitle("Review Submitted");
+                        setModalDescription("Your review has been submitted successfully!");
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      Submit Review
+                    </button>
+                  </div>
                 </>
               )}
 
@@ -305,7 +460,29 @@ export default function Home() {
                     ← Back
                   </button>
                   <h1 className="text-4xl font-semibold mb-6 text-white">Submit to Grant ID: {grantId}</h1>
-                  {/* Add Submit to Grant Form Here */}
+
+                  {/* Submit to Grant Form */}
+                  <div className="space-y-6">
+                    <input
+                      value={referenceURL}
+                      onChange={(e) => setReferenceURL(e.target.value)}
+                      placeholder="Reference URL"
+                      className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                    />
+
+                    <button
+                      className="w-full p-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                      onClick={() => {
+                        const submissionId = "submissionId";
+                        setSubmissionId(submissionId);
+                        setModalTitle("Submission Complete");
+                        setModalDescription("Your reference has been submitted successfully!");
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      Submit
+                    </button>
+                  </div>
                 </>
               )}
             </>
