@@ -4,6 +4,7 @@ export default function Home() {
   const [role, setRole] = useState("sponsor");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(true);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 font-poppins">
@@ -46,7 +47,7 @@ export default function Home() {
           {role === "sponsor" && (
             <>
               <h1 className="text-4xl font-semibold mb-6 text-white">Offer a Grant</h1>
-              <form className="space-y-6">
+              <div className="space-y-6">
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -62,11 +63,26 @@ export default function Home() {
                 <button className="w-full p-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-transform transform hover:scale-105">
                   Submit
                 </button>
-              </form>
+              </div>
             </>
           )}
         </div>
       </div>
+      {isModalOpen && (
+        <div className="fixed z-50 top-0 left-0 w-full h-full flex justify-center items-center">
+          <div className="bg-black bg-opacity-50 absolute w-full h-full" onClick={() => setIsModalOpen(false)}></div>
+          <div className="bg-transparent backdrop-blur-lg p-6 rounded-lg shadow-2xl w-full max-w-md z-10 space-y-4">
+            <h2 className="text-2xl font-semibold text-white">Modal Title</h2>
+            <p className="text-white">This is your modal content. Add any information or actions you'd like here.</p>
+            <button
+              className="w-full p-2 rounded-md bg-purple-600 text-white hover:bg-purple-700"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Close Modal
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
