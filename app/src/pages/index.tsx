@@ -1,7 +1,11 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useState } from "react";
+import { useToast } from "@/hooks/useToast";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const { toast, showToast } = useToast();
+  const [showAnimation, setShowAnimation] = useState(false);
+
   const [role, setRole] = useState<"sponsor" | "applicant">("sponsor");
 
   const [sponsorAction, setSponsorAction] = useState<
@@ -11,8 +15,11 @@ export default function Home() {
     "default"
   );
 
-  const [grantName, setGrantName] = useState("");
-  const [grantDescription, setGrantDescription] = useState("");
+  const [grantName, setGrantName] = useState("Grant Name");
+  const [grantDescription, setGrantDescription] = useState("Grant Description");
+  const [grantToken, setGrantToken] = useState("ETH");
+  const [grantAmount, setGrantAmount] = useState("0.01");
+
   const [grantId, setGrantId] = useState("");
 
   const [teamName, setTeamName] = useState("");
@@ -23,6 +30,10 @@ export default function Home() {
   const [referenceURL, setReferenceURL] = useState("");
   const [submissionId, setSubmissionId] = useState("");
   const [isSubmissionReviewed, setIsSubmissionReviewed] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalDescription, setModalDescription] = useState("");
 
   const addTeamMember = () => {
     setTeamMembers([...teamMembers, ""]);
@@ -39,10 +50,6 @@ export default function Home() {
     newTeamMembers.splice(index, 1);
     setTeamMembers(newTeamMembers);
   };
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState("");
-  const [modalDescription, setModalDescription] = useState("");
 
   const moveToSponsor = () => {
     setSponsorAction("default");
@@ -73,11 +80,34 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    if (toast) {
+      setShowAnimation(true);
+      setTimeout(() => {
+        setShowAnimation(false);
+      }, toast.duration - 300);
+    }
+  }, [toast]);
+
+  const computedToastClassNames = showAnimation
+    ? "opacity-100 transition-opacity duration-300"
+    : "opacity-0 transition-opacity duration-300";
+
+  const dummyMetadata = {
+    protocol: 1,
+    pointer: "bafybeia4khbew3r2mkflyn7nzlvfzcb3qpfeftz5ivpzfwn77ollj47gqi",
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-700 to-gray-950 font-poppins">
-      <header className="sticky top-0 z-50 flex justify-end items-center w-full p-4">
-        <button className="px-6 py-3 rounded-md bg-purple-600 text-white hover:bg-purple-700">Connect Wallet</button>
+      <header className="sticky top-0 flex justify-end items-center w-full p-4">
+        <button className="px-6 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700">Connect Wallet</button>
       </header>
+      <div
+        className={`fixed top-4 right-4 w-96 bg-purple-800 text-white p-4 rounded-lg shadow-md z-50 transition-all duration-300 transform ease-in-out opacity-100 ${computedToastClassNames}`}
+      >
+        {toast?.message}
+      </div>
       <div className="flex flex-col justify-center items-center py-12">
         <div className="mb-6 flex justify-end items-center w-full max-w-xl px-4">
           <nav className="flex space-x-4 text-white">
@@ -99,7 +129,7 @@ export default function Home() {
             </button>
           </nav>
         </div>
-        <div className="bg-transparent backdrop-blur-lg p-10 rounded-md shadow-md w-full max-w-xl mx-auto space-y-6">
+        <div className="bg-transparent backdrop-blur-lg p-10 rounded-lg shadow-md w-full max-w-xl mx-auto space-y-6">
           {role === "sponsor" && (
             <>
               {sponsorAction === "default" && (
@@ -108,7 +138,7 @@ export default function Home() {
                     <h1 className="text-4xl font-semibold mb-6 text-white">Sponsor Dashboard</h1>
                     <div>
                       <button
-                        className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                        className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                         onClick={() => setSponsorAction("createGrant")}
                         disabled={!!grantId}
                       >
@@ -124,7 +154,7 @@ export default function Home() {
                         placeholder="Application ID"
                       />
                       <button
-                        className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                        className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                         onClick={() => setSponsorAction("reviewApplication")}
                         disabled={!applicationId || isApplicationReviewed}
                       >
@@ -140,7 +170,7 @@ export default function Home() {
                         placeholder="Submission ID"
                       />
                       <button
-                        className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                        className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                         onClick={() => setSponsorAction("reviewSubmission")}
                         disabled={!submissionId || isSubmissionReviewed}
                       >
@@ -158,7 +188,7 @@ export default function Home() {
                   <h1 className="text-4xl font-semibold mb-6 text-white">Create Grant</h1>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <p className="text-xl font-semibold text-white">Grant Name</p>
+                      <p className="text-xl font-semibold text-white">Name</p>
                       <input
                         value={grantName}
                         onChange={(e) => setGrantName(e.target.value)}
@@ -167,7 +197,7 @@ export default function Home() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <p className="text-xl font-semibold text-white">Grant Descrtiption</p>
+                      <p className="text-xl font-semibold text-white">Descrtiption</p>
                       <textarea
                         value={grantDescription}
                         onChange={(e) => setGrantDescription(e.target.value)}
@@ -176,8 +206,26 @@ export default function Home() {
                         rows={5}
                       ></textarea>
                     </div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-semibold text-white">Token</p>
+                      <input
+                        value={grantToken}
+                        onChange={(e) => setGrantToken(e.target.value)}
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        placeholder="Grant Name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-semibold text-white">Amount</p>
+                      <input
+                        value={grantAmount}
+                        onChange={(e) => setGrantAmount(e.target.value)}
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        placeholder="Grant Name"
+                      />
+                    </div>
                     <button
-                      className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => {
                         const grantId = "grantId";
                         setGrantId(grantId);
@@ -217,7 +265,7 @@ export default function Home() {
                       </ul>
                     </div>
                     <button
-                      className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => {
                         setIsApplicationReviewed(true);
                         setModalTitle("Application Confirmed");
@@ -264,7 +312,7 @@ export default function Home() {
                       </p>
                     </div>
                     <button
-                      className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => {
                         setIsSubmissionReviewed(true);
                         setModalTitle("Submission Approved");
@@ -293,7 +341,7 @@ export default function Home() {
                       className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none mb-2"
                     />
                     <button
-                      className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => setApplicantAction("applyForGrant")}
                       disabled={!grantId || !!applicationId}
                     >
@@ -310,7 +358,7 @@ export default function Home() {
                     />
 
                     <button
-                      className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => setApplicantAction("submitToGrant")}
                       disabled={!applicationId || !isApplicationReviewed || !!submissionId}
                     >
@@ -372,7 +420,7 @@ export default function Home() {
                       </div>
                     </div>
                     <button
-                      className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => {
                         const applicationId = "applicationId";
                         setApplicationId(applicationId);
@@ -403,7 +451,7 @@ export default function Home() {
                       />
                     </div>
                     <button
-                      className="w-full px-6 py-3 rounded-md bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => {
                         const submissionId = "submissionId";
                         setSubmissionId(submissionId);
@@ -424,10 +472,10 @@ export default function Home() {
       {isModalOpen && (
         <div className="fixed z-50 top-0 left-0 w-full h-full flex justify-center items-center">
           <div className="bg-black bg-opacity-75 absolute w-full h-full" onClick={closeModal}></div>
-          <div className="bg-gradient-to-br from-gray-700 to-gray-950 px-8 py-6 rounded-md shadow-md w-full max-w-md z-10 space-y-4">
+          <div className="bg-gradient-to-br from-gray-700 to-gray-950 px-8 py-6 rounded-lg shadow-md w-full max-w-md z-10 space-y-4">
             <h2 className="text-2xl font-semibold text-white">{modalTitle}</h2>
             <p className="text-white">{modalDescription}</p>
-            <button className="w-full p-2 rounded-md bg-purple-600 text-white hover:bg-purple-700" onClick={closeModal}>
+            <button className="w-full p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700" onClick={closeModal}>
               Close
             </button>
           </div>
