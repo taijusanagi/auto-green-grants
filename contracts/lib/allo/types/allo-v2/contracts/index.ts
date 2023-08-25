@@ -3,3 +3,5 @@
 /* eslint-disable */
 import type * as core from "./core";
 export type { core };
+import type * as strategies from "./strategies";
+export type { strategies };

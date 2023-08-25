@@ -69,6 +69,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Registry__factory>;
     getContractFactory(
+      name: "BaseStrategy",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BaseStrategy__factory>;
+    getContractFactory(
+      name: "DirectGrantsSimpleStrategy",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.DirectGrantsSimpleStrategy__factory>;
+    getContractFactory(
       name: "Ownable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Ownable__factory>;
@@ -155,6 +163,16 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Registry>;
+    getContractAt(
+      name: "BaseStrategy",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BaseStrategy>;
+    getContractAt(
+      name: "DirectGrantsSimpleStrategy",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.DirectGrantsSimpleStrategy>;
     getContractAt(
       name: "Ownable",
       address: string,

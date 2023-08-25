@@ -9,14 +9,33 @@ import {
   Allo__factory,
   Registry__factory,
   Anchor__factory,
+  DirectGrantsSimpleStrategy__factory,
 } from "../lib/allo";
 
 describe("Allo", function () {
+  const provider = ethers.provider;
+
   async function fixture() {
-    const [defaultSigner, profileOwner, profileMember, poolManager, recipient] = await ethers.getSigners();
-    const alloCore = Allo__factory.connect(ALLO_CORE_ADDRESS, defaultSigner);
-    const alloRegistry = Registry__factory.connect(ALLO_REGISTRY_ADDRESS, defaultSigner);
-    return { alloCore, alloRegistry, defaultSigner, profileOwner, profileMember, poolManager, recipient };
+    const alloCore = Allo__factory.connect(ALLO_CORE_ADDRESS, provider);
+    const alloRegistry = Registry__factory.connect(ALLO_REGISTRY_ADDRESS, provider);
+    const [
+      poolCreatorProfileOwner,
+      poolCreatorProfileMember,
+      recipientProfileOwner,
+      poolManager,
+      poolFunder,
+      recipient,
+    ] = await ethers.getSigners();
+    return {
+      alloCore,
+      alloRegistry,
+      poolCreatorProfileOwner,
+      poolCreatorProfileMember,
+      recipientProfileOwner,
+      poolManager,
+      poolFunder,
+      recipient,
+    };
   }
 
   describe("Test", function () {
@@ -28,70 +47,83 @@ describe("Allo", function () {
       expect(await alloRegistry.ALLO_OWNER()).to.equal(utils.ALLO_OWNER);
     });
     it("Know basic flow of Allo protocol", async function () {
-      const { alloCore, alloRegistry, profileOwner, profileMember, poolManager, recipient } = await loadFixture(
-        fixture
-      );
+      const {
+        alloCore,
+        alloRegistry,
+        poolCreatorProfileOwner,
+        poolCreatorProfileMember,
+        recipientProfileOwner,
+        poolManager,
+        poolFunder,
+        recipient,
+      } = await loadFixture(fixture);
 
-      // Create profile
-      const nonce = 0;
-      const name = "Test";
       // Mock metadata for now
-      const profileMetadata = {
+      const dummyMetadata = {
         protocol: 1,
         pointer: "bafybeia4khbew3r2mkflyn7nzlvfzcb3qpfeftz5ivpzfwn77ollj47gqi",
       };
-      const owner = profileOwner.address;
-      const members = [profileOwner.address, profileMember.address];
-      const createProfileTx = await alloRegistry
-        .connect(profileOwner)
-        .createProfile(nonce, name, profileMetadata, owner, members);
-      const createProfileReceipt = await createProfileTx.wait();
 
-      const profileId = createProfileReceipt.events?.[createProfileReceipt.events.length - 1].args?.profileId;
-      const alloAnchorAddress = createProfileReceipt.events?.[createProfileReceipt.events.length - 1].args?.anchor;
-      const alloAnchor = Anchor__factory.connect(alloAnchorAddress, profileOwner);
+      // Create profile for pool creator
+      const createPoolCreatorProfileTx = await alloRegistry
+        .connect(poolCreatorProfileOwner)
+        .createProfile(0, "Pool Creator Profile", { ...dummyMetadata }, poolCreatorProfileOwner.address, [
+          poolCreatorProfileMember.address,
+        ]);
+      const createPoolCreatorProfileReceipt = await createPoolCreatorProfileTx.wait();
+      const poolCreatorProfileId =
+        createPoolCreatorProfileReceipt.events?.[createPoolCreatorProfileReceipt.events.length - 1].args?.profileId;
+      const poolCreatorAlloAnchorAddress =
+        createPoolCreatorProfileReceipt.events?.[createPoolCreatorProfileReceipt.events.length - 1].args?.anchor;
+      const poolCreatorAlloAnchor = Anchor__factory.connect(poolCreatorAlloAnchorAddress, provider);
+
+      // Create profile for recipient
+      // const createRecipientProfileTx = await alloRegistry
+      //   .connect(poolCreatorProfileOwner)
+      //   .createProfile(0, "Recipient Profile", dummyMetadata, recipientProfileOwner.address, [
+      //     recipientProfileOwner.address,
+      //   ]);
+      // const createRecipientProfileReceipt = await createRecipientProfileTx.wait();
+      // const recipientProfileId =
+      //   createRecipientProfileReceipt.events?.[createRecipientProfileReceipt.events.length - 1].args?.profileId;
+      // const recipientAlloAnchorAddress =
+      //   createRecipientProfileReceipt.events?.[createRecipientProfileReceipt.events.length - 1].args?.anchor;
+      // const recipientAlloAnchor = Anchor__factory.connect(recipientAlloAnchorAddress, provider);
 
       // Create pool
-      // Encode data for (bool _registryGating, bool _metadataRequired, bool _grantAmountRequired)
-      const initDirectGrantsSimpleStrategyData = ethers.utils.defaultAbiCoder.encode(
-        ["bool", "bool", "bool"],
-        [true, false, false]
-      );
-      const token = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"; // Ether
-      const amount = 0; // No initial amount
-      // Mock metadata for now
-      const poolMetadata = {
-        protocol: "1",
-        pointer: "bafybeia4khbew3r2mkflyn7nzlvfzcb3qpfeftz5ivpzfwn77ollj47gqi",
-      };
       const managers = [poolManager.address];
-      const createPoolTx = await alloCore
-        .connect(profileOwner)
-        .createPool(
-          profileId,
-          ALLO_DIRECT_GRANTS_SIMPLE_STRATEGY_ADDRESS,
-          initDirectGrantsSimpleStrategyData,
-          token,
-          amount,
-          poolMetadata,
-          managers
-        );
+      const poolAmount = ethers.utils.parseEther("1");
+      const createPoolTx = await alloCore.connect(poolCreatorProfileMember).createPool(
+        poolCreatorProfileId,
+        ALLO_DIRECT_GRANTS_SIMPLE_STRATEGY_ADDRESS,
+        // Encode data for (bool _registryGating, bool _metadataRequired, bool _grantAmountRequired)
+        ethers.utils.defaultAbiCoder.encode(["bool", "bool", "bool"], [false, false, false]),
+        "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        poolAmount,
+        { ...dummyMetadata },
+        managers,
+        { value: poolAmount }
+      );
       const createPoolRecipt = await createPoolTx.wait();
       const poolId = createPoolRecipt.events?.[createPoolRecipt.events.length - 1].args?.poolId;
+      const strategyAddress = createPoolRecipt.events?.[createPoolRecipt.events.length - 1].args?.strategy;
+      const strategy = DirectGrantsSimpleStrategy__factory.connect(strategyAddress, provider);
 
-      // Create recipient
-      const recipientMetadata = [
-        1, // protocol
-        "bafybeia4khbew3r2mkflyn7nzlvfzcb3qpfeftz5ivpzfwn77ollj47gqi", // pointer
-      ];
-      // Encode data for (address recipientId, address recipientAddress, uint256 grantAmount, Metadata metadata)
-      const registerRecipientData = ethers.utils.defaultAbiCoder.encode(
-        ["address", "address", "uint256", "tuple(uint256, string)"],
-        [alloAnchorAddress, recipient.address, 0, recipientMetadata]
+      console.log("strategyAddress", strategyAddress);
+      // Register recipient
+      await alloCore.connect(recipient).registerRecipient(
+        poolId,
+        // Encode data for (address recipientAddress, address registryAnchor, uint256 grantAmount, Metadata metadata)
+        ethers.utils.defaultAbiCoder.encode(
+          ["address", "address", "uint256", "tuple(uint256, string)"],
+          [recipient.address, ethers.constants.AddressZero, 0, [dummyMetadata.protocol, dummyMetadata.pointer]]
+        )
       );
 
-      // Register recipient
-      await alloCore.connect(profileOwner).registerRecipient(poolId, registerRecipientData);
+      console.log(await strategy.getRecipient(recipient.address));
+      // await strategy.connect(poolCreatorProfileMember).setInternalRecipientStatusToInReview([recipient.address]);
+
+      // await alloCore.connect(profileOwner).allocate([poolId], [registerRecipientData]);
     });
   });
 });
