@@ -133,6 +133,12 @@ describe("Allo", function () {
       console.log("Recipient: submitMilestone");
       await strategy.connect(recipient).submitMilestone(recipientAlloAnchorAddress, 0, { ...dummyMetadata });
 
+      console.log("PoolOwner: rejectMilestone");
+      await strategy.connect(poolOwner).rejectMilestone(recipientAlloAnchorAddress, 0);
+
+      console.log("Recipient: submitMilestone again");
+      await strategy.connect(recipient).submitMilestone(recipientAlloAnchorAddress, 0, { ...dummyMetadata });
+
       console.log("PoolOwner: distribute");
       const originalRecipientBalance = await provider.getBalance(recipient.address);
       await alloCore.connect(poolOwner).distribute(poolId, [recipientAlloAnchorAddress], utils.NULL_BYTES);
