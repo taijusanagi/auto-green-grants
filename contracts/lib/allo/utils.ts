@@ -1,3 +1,11 @@
 export const utils = {
   ALLO_OWNER: "0x815b5a78dc333d344c7df9da23c04dbd432015cc701876ddb9ffe850e6882747",
+  AMOUNT_PERCENTAGE_BASE: "1000000000000000000",
+  NULL_BYTES: "0x",
+  STATUS: {
+    NONE: 0,
+    PENDING: 1,
+    ACCEPTED: 2,
+    REJECTED: 3,
+  },
 };
