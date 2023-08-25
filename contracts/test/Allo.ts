@@ -104,8 +104,9 @@ describe("Allo", function () {
         )
       );
 
-      console.log("PoolOwner: setInternalRecipientStatusToInReview");
-      await strategy.connect(poolOwner).setInternalRecipientStatusToInReview([recipientAlloAnchorAddress]);
+      // can skip
+      // console.log("PoolOwner: setInternalRecipientStatusToInReview");
+      // await strategy.connect(poolOwner).setInternalRecipientStatusToInReview([recipientAlloAnchorAddress]);
 
       console.log("PoolOwner: allocate");
       await alloCore.connect(poolOwner).allocate(
@@ -127,8 +128,9 @@ describe("Allo", function () {
         },
       ]);
 
-      console.log("PoolOwner: reviewSetMilestones");
-      await strategy.connect(poolOwner).reviewSetMilestones(recipientAlloAnchorAddress, utils.STATUS.ACCEPTED);
+      // can skip
+      // console.log("PoolOwner: reviewSetMilestones");
+      // await strategy.connect(poolOwner).reviewSetMilestones(recipientAlloAnchorAddress, utils.STATUS.ACCEPTED);
 
       console.log("Recipient: submitMilestone");
       await strategy.connect(recipient).submitMilestone(recipientAlloAnchorAddress, 0, { ...dummyMetadata });
