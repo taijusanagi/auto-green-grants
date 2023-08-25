@@ -75,22 +75,24 @@ describe("Allo", function () {
       await directGrantsSimpleStrategy.deployed();
 
       console.log("PoolOwner: createPoolWithCustomStrategy");
-      const poolAmount = ethers.utils.parseEther("1");
+      const grantAmount = ethers.utils.parseEther("1");
       const createPoolTx = await alloCore.connect(poolOwner).createPoolWithCustomStrategy(
         poolCreatorProfileId,
         directGrantsSimpleStrategy.address,
         // Encode data for (bool _registryGating, bool _metadataRequired, bool _grantAmountRequired)
         ethers.utils.defaultAbiCoder.encode(["bool", "bool", "bool"], [true, false, false]),
         "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        poolAmount,
+        grantAmount,
         { ...dummyMetadata },
         [],
-        { value: poolAmount }
+        { value: grantAmount }
       );
+
       const createPoolRecipt = await createPoolTx.wait();
       const poolId = createPoolRecipt.events?.[createPoolRecipt.events.length - 1].args?.poolId;
       const strategyAddress = createPoolRecipt.events?.[createPoolRecipt.events.length - 1].args?.strategy;
       const strategy = DirectGrantsSimpleStrategy__factory.connect(strategyAddress, provider);
+      expect(await strategy.getPoolAmount()).to.equal(grantAmount);
 
       console.log("Recipient: registerRecipient");
       await alloCore.connect(recipient).registerRecipient(
@@ -111,7 +113,7 @@ describe("Allo", function () {
         // Encode for (address recipientId, InternalRecipientStatus recipientStatus, uint256 grantAmount)
         ethers.utils.defaultAbiCoder.encode(
           ["address", "uint256", "uint256"],
-          [recipientAlloAnchorAddress, utils.STATUS.ACCEPTED, poolAmount]
+          [recipientAlloAnchorAddress, utils.STATUS.ACCEPTED, grantAmount]
         )
       );
 
@@ -132,7 +134,14 @@ describe("Allo", function () {
       await strategy.connect(recipient).submitMilestone(recipientAlloAnchorAddress, 0, { ...dummyMetadata });
 
       console.log("PoolOwner: distribute");
+      const originalRecipientBalance = await provider.getBalance(recipient.address);
       await alloCore.connect(poolOwner).distribute(poolId, [recipientAlloAnchorAddress], utils.NULL_BYTES);
+      const newRecipientBalance = await provider.getBalance(recipient.address);
+      expect(await strategy.getPoolAmount()).to.equal(0);
+      expect(newRecipientBalance).to.equal(originalRecipientBalance.add(grantAmount));
+
+      console.log("PoolOwner: setPoolActive");
+      await strategy.connect(poolOwner).setPoolActive(false);
     });
 
     it("Integration Test", async function () {});
