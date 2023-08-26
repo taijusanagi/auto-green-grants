@@ -558,24 +558,23 @@ export default function Home() {
                           const sdk = await import("@hypercerts-org/sdk");
                           const { formatHypercertData, TransferRestrictions } = sdk;
 
-                          // TODO: integrate hypercert
                           const { data: metadata } = formatHypercertData({
-                            name: "",
-                            description: "",
-                            external_url: `ipfs://${assetId}`,
+                            name: "Green Grant",
+                            description: "Green Grant Contributer",
+                            external_url: `ipfs://${assetId}`, // link to co2.storage asset
                             version: "0.0.1",
                             image: "",
-                            workScope: ["IPFS"],
+                            workScope: ["GreenGrant"],
                             excludedWorkScope: [],
-                            impactScope: ["All"],
-                            excludedImpactScope: [],
-                            workTimeframeStart: 1380585600,
-                            workTimeframeEnd: 1388534399,
-                            impactTimeframeStart: 1380585600,
-                            impactTimeframeEnd: 0,
-                            contributors: [],
-                            rights: [],
-                            excludedRights: [],
+                            impactScope: ["All"], // Asset id witch has
+                            excludedImpactScope: [], // out of scope
+                            workTimeframeStart: new Date().getTime() / 1000, // use current
+                            workTimeframeEnd: new Date().getTime() / 1000, // use current
+                            impactTimeframeStart: new Date().getTime() / 1000, // use current
+                            impactTimeframeEnd: new Date().getTime() / 1000, // use current
+                            contributors: [], // add members
+                            rights: [], // out of scope
+                            excludedRights: [], // out of scope
                           });
                           if (!metadata) {
                             throw new Error("Hypercert metadata invalid");
