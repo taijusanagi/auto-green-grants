@@ -48,4 +48,4 @@ Coming Soon!
 
 ### BAT
 
-- **Payment Token:** The BAT token has been integrated and is used as the platform's primary payment token.
+- **Payment Token:** The BAT token has been integrated and is used as the platform's payment token.
