@@ -13,6 +13,9 @@ import { utils } from "@/lib/allo";
 
 import { useHyperCert } from "@/hooks/useHyperCert";
 
+import { Web3Storage } from "web3.storage";
+const web3StorageClient = new Web3Storage({ token: process.env.NEXT_PUBLIC_WEB3_STORAGE_API_KEY || "" });
+
 export default function Home() {
   const {
     alloCoreContract,
@@ -161,11 +164,6 @@ export default function Home() {
       document.body.style.overflow = "auto"; // reset on unmount
     };
   }, [isDebugStarted, isModalOpen]);
-
-  const dummyMetadata = {
-    protocol: 1,
-    pointer: "bafybeia4khbew3r2mkflyn7nzlvfzcb3qpfeftz5ivpzfwn77ollj47gqi",
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-700 to-gray-950 font-poppins">
@@ -345,12 +343,26 @@ export default function Home() {
                           debug.start();
                           debug.log(`Sponsor: ${userAddress}`);
                           debug.log("Sponsor: createProfile");
+                          const createProfileMetadtaCID = await web3StorageClient.put([
+                            new File(
+                              [
+                                new Blob([JSON.stringify({ name: "Pool Creator Profile" })], {
+                                  type: "application/json",
+                                }),
+                              ],
+                              "metadata.json",
+                            ),
+                          ]);
+                          debug.log("createProfileMetadtaCID", createProfileMetadtaCID);
                           // use random nance for easy demo
                           const randomNonce = ethers.utils.randomBytes(32);
                           const createSponsorProfileTx = await alloRegistryContract.createProfile(
                             randomNonce,
                             "Pool Creator Profile",
-                            { ...dummyMetadata },
+                            {
+                              protocol: 1,
+                              pointer: createProfileMetadtaCID,
+                            },
                             userAddress,
                             [],
                           );
@@ -371,6 +383,17 @@ export default function Home() {
                           const directGrantsSimpleStrategy = await deployDirectGrantsSimpleStrategy();
 
                           debug.log("Sponsor: createPoolWithCustomStrategy");
+                          const createPoolMetadtaCID = await web3StorageClient.put([
+                            new File(
+                              [
+                                new Blob([JSON.stringify({ grantName, grantDescription })], {
+                                  type: "application/json",
+                                }),
+                              ],
+                              "metadata.json",
+                            ),
+                          ]);
+                          debug.log("createPoolMetadtaCID", createPoolMetadtaCID);
                           const createPoolTx = await alloCoreContract.createPoolWithCustomStrategy(
                             sponsorProfileId,
                             directGrantsSimpleStrategy.address,
@@ -378,7 +401,7 @@ export default function Home() {
                             ethers.utils.defaultAbiCoder.encode(["bool", "bool", "bool"], [true, true, false]),
                             "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
                             ethers.utils.parseEther(grantAmount),
-                            { ...dummyMetadata },
+                            { protocol: 1, pointer: createPoolMetadtaCID },
                             [],
                             { value: ethers.utils.parseEther(grantAmount) },
                           );
@@ -717,12 +740,24 @@ export default function Home() {
                           debug.start();
                           debug.log(`Applicant: ${userAddress}`);
                           debug.log("Applicant: createProfile");
+
+                          const createProfileMetadtaCID = await web3StorageClient.put([
+                            new File(
+                              [
+                                new Blob([JSON.stringify({ name: "Applicant Profile" })], {
+                                  type: "application/json",
+                                }),
+                              ],
+                              "metadata.json",
+                            ),
+                          ]);
+                          debug.log("createProfileMetadtaCID", createProfileMetadtaCID);
                           // use random nance for easy demo
                           const randomNance = ethers.utils.randomBytes(32);
                           const createApplicantProfileTx = await alloRegistryContract.createProfile(
                             randomNance,
                             "Applicant Profile",
-                            dummyMetadata,
+                            { protocol: 1, pointer: createProfileMetadtaCID },
                             userAddress,
                             [],
                           );
@@ -739,17 +774,23 @@ export default function Home() {
                           debug.log("applicantAlloAnchorAddress", applicantAlloAnchorAddress);
 
                           debug.log("Applicant: registerRecipient");
+                          const registerRecipientMetadtaCID = await web3StorageClient.put([
+                            new File(
+                              [
+                                new Blob([JSON.stringify({ teamName, teamDescription, teamMembers })], {
+                                  type: "application/json",
+                                }),
+                              ],
+                              "metadata.json",
+                            ),
+                          ]);
+                          debug.log("registerRecipientMetadtaCID", registerRecipientMetadtaCID);
                           const registerRecipientTx = await alloCoreContract.registerRecipient(
                             grantId,
                             // Encode data for (address recipientId, address recipientAddress, uint256 grantAmount, Metadata metadata)
                             ethers.utils.defaultAbiCoder.encode(
                               ["address", "address", "uint256", "tuple(uint256, string)"],
-                              [
-                                applicantAlloAnchorAddress,
-                                userAddress,
-                                0,
-                                [dummyMetadata.protocol, dummyMetadata.pointer],
-                              ],
+                              [applicantAlloAnchorAddress, userAddress, 0, [1, registerRecipientMetadtaCID]],
                             ),
                           );
                           debug.log("registerRecipientTx.hash", registerRecipientTx.hash);
@@ -801,10 +842,21 @@ export default function Home() {
                           debug.log(`Applicant: ${userAddress}`);
                           debug.log("Applicant: setMilestones");
                           // Just create sigle milestone for demo
+                          const setMilestonesMetadtaCID = await web3StorageClient.put([
+                            new File(
+                              [
+                                new Blob([JSON.stringify({ name: "Dummy Milestone To Process" })], {
+                                  type: "application/json",
+                                }),
+                              ],
+                              "metadata.json",
+                            ),
+                          ]);
+                          debug.log("setMilestonesMetadtaCID", setMilestonesMetadtaCID);
                           const setMilestonesTx = await directGrantsSimpleStrategy.setMilestones(applicantId, [
                             {
                               amountPercentage: utils.AMOUNT_PERCENTAGE_BASE,
-                              metadata: { ...dummyMetadata },
+                              metadata: { protocol: 1, pointer: setMilestonesMetadtaCID },
                               milestoneStatus: utils.STATUS.NONE,
                             },
                           ]);
@@ -812,12 +864,24 @@ export default function Home() {
                           await setMilestonesTx.wait();
 
                           debug.log("Applicant: submitMilestone");
+                          const submitMilestoneMetadtaCID = await web3StorageClient.put([
+                            new File(
+                              [
+                                new Blob([JSON.stringify({ referenceURL })], {
+                                  type: "application/json",
+                                }),
+                              ],
+                              "metadata.json",
+                            ),
+                          ]);
+                          debug.log("submitMilestoneMetadtaCID", submitMilestoneMetadtaCID);
                           const milestoneId = 0;
                           const submitMilestoneTx = await directGrantsSimpleStrategy.submitMilestone(
                             applicantId,
                             milestoneId,
                             {
-                              ...dummyMetadata,
+                              protocol: 1,
+                              pointer: submitMilestoneMetadtaCID,
                             },
                           );
                           await submitMilestoneTx.wait();
