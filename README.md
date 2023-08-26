@@ -13,7 +13,7 @@ Driven by our mission to enhance the sustainability of grant distribution, we ai
 
 ## Live Application
 
-https://greengrant.vercel.app/
+https://auto-green-grants.vercel.app/
 
 ## Pitch Deck
 
