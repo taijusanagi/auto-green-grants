@@ -42,7 +42,7 @@ export default function Home() {
 
   const [teamName, setTeamName] = useState("Team Name");
   const [teamDescription, setTeamDescription] = useState("Team Description");
-  const [teamMembers, setTeamMembers] = useState(["0x3dAf2eAE4Fe3232Ed8a29c5e1be6eEba81C1CFD6"]);
+  const [teamMembers, setTeamMembers] = useState([""]);
   const [applicantId, setApplicantId] = useState("");
 
   const [applicationId, setApplicationId] = useState("");
@@ -326,6 +326,7 @@ export default function Home() {
                         }
                         try {
                           debug.start();
+                          debug.log(`Sponsor: ${userAddress}`);
                           debug.log("Sponsor: createProfile");
                           // use random nance for easy demo
                           const randomNonce = ethers.utils.randomBytes(32);
@@ -421,6 +422,7 @@ export default function Home() {
                         }
                         try {
                           debug.start();
+                          debug.log(`Sponsor: ${userAddress}`);
                           debug.log("Sponsor: allocate");
                           const [grantId, recipientId] = applicationId.split(":");
                           const allocateTx = await alloCoreContract.allocate(
@@ -493,6 +495,7 @@ export default function Home() {
                         }
                         try {
                           debug.start();
+                          debug.log(`Sponsor: ${userAddress}`);
                           debug.log("Sponsor: distribute");
                           const distributeTx = await alloCoreContract.distribute(
                             grantId,
@@ -628,6 +631,7 @@ export default function Home() {
                         }
                         try {
                           debug.start();
+                          debug.log(`Applicant: ${userAddress}`);
                           debug.log("Applicant: createProfile");
                           // use random nance for easy demo
                           const randomNance = ethers.utils.randomBytes(32);
@@ -710,6 +714,7 @@ export default function Home() {
                         }
                         try {
                           debug.start();
+                          debug.log(`Applicant: ${userAddress}`);
                           debug.log("Applicant: setMilestones");
                           // Just create sigle milestone for demo
                           const setMilestonesTx = await directGrantsSimpleStrategy.setMilestones(applicantId, [
