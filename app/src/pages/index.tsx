@@ -118,9 +118,7 @@ export default function Home() {
         setIsApplicationReviewed(status === utils.STATUS.ACCEPTED);
       });
       directGrantsSimpleStrategy.getMilestones(applicantId).then((milestones) => {
-        console.log("milestones", milestones);
         if (milestones.length > 0) {
-          console.log("milestones[0].milestoneStatus", milestones[0].milestoneStatus);
           setIsSubmitted(milestones[0].milestoneStatus === utils.STATUS.PENDING);
           setIsSubmissionReviewed(milestones[0].milestoneStatus === utils.STATUS.ACCEPTED);
         }
@@ -505,7 +503,13 @@ export default function Home() {
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={async () => {
-                        if (!userAddress || !alloCoreContract || !directGrantsSimpleStrategy || !carbonOffset) {
+                        if (
+                          !userAddress ||
+                          !alloCoreContract ||
+                          !directGrantsSimpleStrategy ||
+                          !carbonOffset ||
+                          !co2Storage
+                        ) {
                           showToast({
                             message: "Please connect your wallet and ensure it is set to the Goerli testnet.",
                           });
@@ -523,26 +527,31 @@ export default function Home() {
                           // debug.log("distributeTx.hash", distributeTx.hash);
                           // await distributeTx.wait();
 
-                          debug.log("Sponsor: purchaseCarbonOffset");
-                          const purchaseCarbonOffsetTx = await carbonOffset.purchase({
-                            value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
-                          });
-                          debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
-                          purchaseCarbonOffsetTx.wait();
+                          // debug.log("Sponsor: purchaseCarbonOffset");
+                          // const purchaseCarbonOffsetTx = await carbonOffset.purchase({
+                          //   value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
+                          // });
+                          // debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
+                          // purchaseCarbonOffsetTx.wait();
+                          const purchaseCarbonOffsetTx = {
+                            hash: "hash",
+                          };
 
-                          debug.log("Sponsor: verifyCarbonOffsetTx");
-                          const response = await fetch("/api/verifyCarbonOffsetTx", {
+                          debug.log("Sponsor: verifyCarbonOffsetTxAndCreateCO2StorageData");
+                          const response = await fetch("/api/verifyCarbonOffsetTxAndCreateCO2StorageData", {
                             method: "POST",
                             headers: {
                               "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ hash: purchaseCarbonOffsetTx.hash }),
+                            body: JSON.stringify({ hash: purchaseCarbonOffsetTx.hash, grantId }),
                           });
                           if (!response.ok) {
                             throw new Error("Network response was not ok");
                           }
-                          const { message: carbonOffsetTxVerifiedSignature } = await response.json();
-                          debug.log("carbonOffsetTxVerifiedSignature", carbonOffsetTxVerifiedSignature);
+                          const {
+                            result: { assetId },
+                          } = await response.json();
+                          debug.log("CO2 Storage Asset ID", assetId);
 
                           // TODO: integrate hypercert
 
@@ -556,9 +565,10 @@ export default function Home() {
                           // setModalDescription("The submission has been approved successfully!");
                           // setIsModalOpen(true);
                         } catch (e: any) {
-                          showToast({ message: e.message });
+                          console.log(e);
+                          // showToast({ message: e.message });
                         } finally {
-                          // debug.end();
+                          debug.end();
                         }
                       }}
                     >
