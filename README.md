@@ -1,7 +1,5 @@
 # AutoGreenGrants
 
-![screenshot-1](./docs/screenshot-1.png)
-
 ## Description
 
 **AutoGreenGrants** is an innovative grants platform designed to automate the process of:
@@ -10,6 +8,8 @@
 - Purchasing carbon credits while providing attestation to participants.
 
 Driven by our mission to enhance the sustainability of grant distribution, we aim to establish a prominent, environment-friendly presence in the grants ecosystem.
+
+![screenshot-1](./docs/screenshot-1.png)
 
 ## Live Application
 
