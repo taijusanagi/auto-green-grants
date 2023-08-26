@@ -1,15 +1,14 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { ALLO_CORE_ADDRESS, ALLO_REGISTRY_ADDRESS, utils } from "../lib/allo";
+
 import {
-  ALLO_CORE_ADDRESS,
-  ALLO_REGISTRY_ADDRESS,
-  utils,
   Allo__factory,
   Registry__factory,
   Anchor__factory,
   DirectGrantsSimpleStrategy__factory,
-} from "../lib/allo";
+} from "../typechain-types";
 
 describe("Allo", function () {
   const provider = ethers.provider;
@@ -70,7 +69,7 @@ describe("Allo", function () {
       const DirectGrantsSimpleStrategy = await ethers.getContractFactory("DirectGrantsSimpleStrategy");
       const directGrantsSimpleStrategy = await DirectGrantsSimpleStrategy.connect(poolOwner).deploy(
         ALLO_CORE_ADDRESS,
-        "DirectGrantsSimpleStrategy"
+        "DirectGrantsSimpleStrategy",
       );
       await directGrantsSimpleStrategy.deployed();
 
@@ -85,7 +84,7 @@ describe("Allo", function () {
         grantAmount,
         { ...dummyMetadata },
         [],
-        { value: grantAmount }
+        { value: grantAmount },
       );
 
       const createPoolRecipt = await createPoolTx.wait();
@@ -100,8 +99,8 @@ describe("Allo", function () {
         // Encode data for (address recipientId, address recipientAddress, uint256 grantAmount, Metadata metadata)
         ethers.utils.defaultAbiCoder.encode(
           ["address", "address", "uint256", "tuple(uint256, string)"],
-          [recipientAlloAnchorAddress, recipient.address, 0, [dummyMetadata.protocol, dummyMetadata.pointer]]
-        )
+          [recipientAlloAnchorAddress, recipient.address, 0, [dummyMetadata.protocol, dummyMetadata.pointer]],
+        ),
       );
 
       // can skip
@@ -114,8 +113,8 @@ describe("Allo", function () {
         // Encode for (address recipientId, InternalRecipientStatus recipientStatus, uint256 grantAmount)
         ethers.utils.defaultAbiCoder.encode(
           ["address", "uint256", "uint256"],
-          [recipientAlloAnchorAddress, utils.STATUS.ACCEPTED, grantAmount]
-        )
+          [recipientAlloAnchorAddress, utils.STATUS.ACCEPTED, grantAmount],
+        ),
       );
 
       console.log("Recipient: setMilestones");

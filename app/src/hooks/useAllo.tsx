@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { useEthersProvider, useEthersSigner } from "@/hooks/useEthers";
+import { ALLO_CORE_ADDRESS, ALLO_REGISTRY_ADDRESS } from "@/lib/allo";
 import {
-  ALLO_CORE_ADDRESS,
   Allo__factory,
   Allo,
   Registry,
   Registry__factory,
-  ALLO_REGISTRY_ADDRESS,
   DirectGrantsSimpleStrategy,
   DirectGrantsSimpleStrategy__factory,
-} from "@/lib/allo";
+} from "@/lib/typechain-types";
 
 import { useNetwork } from "wagmi";
 import { ContractFactory, ethers } from "ethers";
@@ -36,11 +35,11 @@ export const useAllo = () => {
     const directGrantsSimpleStrategyFactory = new ethers.ContractFactory(
       DirectGrantsSimpleStrategy__factory.abi,
       DirectGrantsSimpleStrategy__factory.bytecode,
-      ethersSigner
+      ethersSigner,
     );
     const directGrantsSimpleStrategy = await directGrantsSimpleStrategyFactory.deploy(
       ALLO_CORE_ADDRESS,
-      "DirectGrantsSimpleStrategy"
+      "DirectGrantsSimpleStrategy",
     );
     await directGrantsSimpleStrategy.deployed();
     const result = directGrantsSimpleStrategy as DirectGrantsSimpleStrategy;

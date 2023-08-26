@@ -4,6 +4,8 @@ import { FaSpinner } from "react-icons/fa";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { useAllo } from "@/hooks/useAllo";
+import { useCarbonOffset } from "@/hooks/useCarbonOffset";
+import { useCO2Storage } from "@/hooks/useCO2Storage";
 import { useToast } from "@/hooks/useToast";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
@@ -18,6 +20,9 @@ export default function Home() {
     deployDirectGrantsSimpleStrategy,
     attachDirectGrantsSimpleStrategy,
   } = useAllo();
+  const { carbonOffset } = useCarbonOffset();
+  const { co2Storage } = useCO2Storage();
+
   const { address: userAddress } = useAccount();
 
   const { debug, isDebugStarted, logs } = useDebug();
@@ -29,7 +34,7 @@ export default function Home() {
     "default" | "createGrant" | "reviewApplication" | "reviewSubmission"
   >("default");
   const [applicantAction, setApplicantAction] = useState<"default" | "applyForGrant" | "peerReview" | "submitToGrant">(
-    "default"
+    "default",
   );
 
   const [grantName, setGrantName] = useState("Grant Name");
@@ -37,6 +42,7 @@ export default function Home() {
   const [grantToken, setGrantToken] = useState("ETH");
   const [grantAmount, setGrantAmount] = useState("0.001");
   const [grantStrategy, setGrantStrategy] = useState("DirectGrantsSimpleStrategy");
+  const [isCarbonOffsetEnabled, setIsCarbonOffsetEnabled] = useState(true);
 
   const [grantId, setGrantId] = useState("");
 
@@ -223,7 +229,7 @@ export default function Home() {
                         className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                         onClick={() => setSponsorAction("createGrant")}
                       >
-                        Create Grant
+                        Create Grant 🌱
                       </button>
                     </div>
                     <div className="space-y-2">
@@ -266,7 +272,7 @@ export default function Home() {
                   <button className="mb-2 text-white" onClick={() => setSponsorAction("default")}>
                     ← Back
                   </button>
-                  <h1 className="text-4xl font-semibold mb-6 text-white">Create Grant</h1>
+                  <h1 className="text-4xl font-semibold mb-6 text-white">Create Grant 🌱</h1>
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <p className="text-xl font-semibold text-white">Name</p>
@@ -315,8 +321,20 @@ export default function Home() {
                         disabled={true}
                       />
                     </div>
+                    <div className="space-y-2 mt-4">
+                      <label className="flex items-center space-x-3 text-white text-sm">
+                        <input
+                          type="checkbox"
+                          checked={isCarbonOffsetEnabled}
+                          onChange={() => setIsCarbonOffsetEnabled(!isCarbonOffsetEnabled)}
+                          className="form-checkbox bg-gray-800 border border-gray-700 focus:ring-purple-600 rounded"
+                        />
+                        <span>Enable 10% Carbon Offset</span>
+                      </label>
+                    </div>
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
+                      disabled={!isCarbonOffsetEnabled}
                       onClick={async () => {
                         if (!userAddress || !alloCoreContract || !alloRegistryContract) {
                           showToast({
@@ -335,7 +353,7 @@ export default function Home() {
                             "Pool Creator Profile",
                             { ...dummyMetadata },
                             userAddress,
-                            []
+                            [],
                           );
                           debug.log("createSponsorProfileTx.hash", createSponsorProfileTx.hash);
 
@@ -363,7 +381,7 @@ export default function Home() {
                             ethers.utils.parseEther(grantAmount),
                             { ...dummyMetadata },
                             [],
-                            { value: ethers.utils.parseEther(grantAmount) }
+                            { value: ethers.utils.parseEther(grantAmount) },
                           );
                           debug.log("createPoolTx.hash", createPoolTx.hash);
 
@@ -430,8 +448,8 @@ export default function Home() {
                             // Encode for (address recipientId, InternalRecipientStatus recipientStatus, uint256 grantAmount)
                             ethers.utils.defaultAbiCoder.encode(
                               ["address", "uint256", "uint256"],
-                              [recipientId, utils.STATUS.ACCEPTED, ethers.utils.parseEther(grantAmount)]
-                            )
+                              [recipientId, utils.STATUS.ACCEPTED, ethers.utils.parseEther(grantAmount)],
+                            ),
                           );
                           debug.log("allocateTx.hash", allocateTx.hash);
                           await allocateTx.wait();
@@ -487,7 +505,7 @@ export default function Home() {
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={async () => {
-                        if (!userAddress || !alloCoreContract || !directGrantsSimpleStrategy) {
+                        if (!userAddress || !alloCoreContract || !directGrantsSimpleStrategy || !carbonOffset) {
                           showToast({
                             message: "Please connect your wallet and ensure it is set to the Goerli testnet.",
                           });
@@ -500,10 +518,16 @@ export default function Home() {
                           const distributeTx = await alloCoreContract.distribute(
                             grantId,
                             [applicantId],
-                            utils.NULL_BYTES
+                            utils.NULL_BYTES,
                           );
                           debug.log("distributeTx.hash", distributeTx.hash);
                           await distributeTx.wait();
+
+                          const purchaseCarbonOffsetTx = await carbonOffset.purchase({
+                            value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
+                          });
+                          debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
+                          purchaseCarbonOffsetTx.wait();
 
                           console.log("Sponsor: setPoolActive");
                           const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
@@ -640,7 +664,7 @@ export default function Home() {
                             "Applicant Profile",
                             dummyMetadata,
                             userAddress,
-                            []
+                            [],
                           );
                           debug.log("createApplicantProfileTx.hash", createApplicantProfileTx.hash);
                           const createApplicantProfileReceipt = await createApplicantProfileTx.wait();
@@ -665,8 +689,8 @@ export default function Home() {
                                 userAddress,
                                 0,
                                 [dummyMetadata.protocol, dummyMetadata.pointer],
-                              ]
-                            )
+                              ],
+                            ),
                           );
                           debug.log("registerRecipientTx.hash", registerRecipientTx.hash);
                           await registerRecipientTx.wait();
@@ -734,7 +758,7 @@ export default function Home() {
                             milestoneId,
                             {
                               ...dummyMetadata,
-                            }
+                            },
                           );
                           await submitMilestoneTx.wait();
 
