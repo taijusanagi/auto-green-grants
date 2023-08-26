@@ -515,33 +515,50 @@ export default function Home() {
                           debug.start();
                           debug.log(`Sponsor: ${userAddress}`);
                           debug.log("Sponsor: distribute");
-                          const distributeTx = await alloCoreContract.distribute(
-                            grantId,
-                            [applicantId],
-                            utils.NULL_BYTES,
-                          );
-                          debug.log("distributeTx.hash", distributeTx.hash);
-                          await distributeTx.wait();
+                          // const distributeTx = await alloCoreContract.distribute(
+                          //   grantId,
+                          //   [applicantId],
+                          //   utils.NULL_BYTES,
+                          // );
+                          // debug.log("distributeTx.hash", distributeTx.hash);
+                          // await distributeTx.wait();
 
+                          debug.log("Sponsor: purchaseCarbonOffset");
                           const purchaseCarbonOffsetTx = await carbonOffset.purchase({
                             value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
                           });
                           debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
                           purchaseCarbonOffsetTx.wait();
 
-                          console.log("Sponsor: setPoolActive");
-                          const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
-                          debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
-                          await setPoolActiveToFalseTx.wait();
+                          debug.log("Sponsor: verifyCarbonOffsetTx");
+                          const response = await fetch("/api/verifyCarbonOffsetTx", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ hash: purchaseCarbonOffsetTx.hash }),
+                          });
+                          if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                          }
+                          const { message: carbonOffsetTxVerifiedSignature } = await response.json();
+                          debug.log("carbonOffsetTxVerifiedSignature", carbonOffsetTxVerifiedSignature);
 
-                          setIsSubmissionReviewed(true);
-                          setModalTitle("Submission Approved");
-                          setModalDescription("The submission has been approved successfully!");
-                          setIsModalOpen(true);
+                          // TODO: integrate hypercert
+
+                          // console.log("Sponsor: setPoolActive");
+                          // const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
+                          // debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
+                          // await setPoolActiveToFalseTx.wait();
+
+                          // setIsSubmissionReviewed(true);
+                          // setModalTitle("Submission Approved");
+                          // setModalDescription("The submission has been approved successfully!");
+                          // setIsModalOpen(true);
                         } catch (e: any) {
                           showToast({ message: e.message });
                         } finally {
-                          debug.end();
+                          // debug.end();
                         }
                       }}
                     >
