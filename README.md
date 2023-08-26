@@ -4,49 +4,46 @@
 
 ## Description
 
-AutoGreenGrants is a grants platform which automates
+**AutoGreenGrants** is an innovative grants platform designed to automate the process of:
 
-- Payout to participants
-- Purchase carbon credit with attestation to participants
+- Distributing payouts to participants.
+- Purchasing carbon credits while providing attestation to participants.
 
-Our motivation is to be a sustainable grants provider, and build environment frendly reputation in grants ecosystem.
+Driven by our mission to enhance the sustainability of grant distribution, we aim to establish a prominent, environment-friendly presence in the grants ecosystem.
 
-## Live App
+## Live Application
 
-https://greengrant.vercel.app/
+[Visit AutoGreenGrants](https://greengrant.vercel.app/)
 
 ## Demo Video
 
-TBD
+Coming Soon!
 
 ## Pitch Deck
 
-TBD
+Coming Soon!
 
 ## How It Works
 
 ### Allo Protocol
 
-- AutoGreenGrants is built on Allo Protocol for creating profile, creating pool, registration, reviwing, payout, each life cycle of grants. In this hackathon we spent most of the times on analysing how Allo system works.
-
-- AutoGreenGrants integrates purchacing carbon credit with Allo Protocol's DirectGrantsSimpleStrategy, and certain amount of grants payout goes to Carbon Credit provider automatically.
+- **Functionality:** AutoGreenGrants is built on the Allo Protocol. This protocol manages various tasks such as profile creation, pool establishment, registration, reviewing, and the entire life cycle of the grant payout.
+- **Carbon Credit Integration:** We've incorporated the purchase of carbon credits into Allo Protocol's `DirectGrantsSimpleStrategy`. A designated portion of the grant payout is automatically directed to the Carbon Credit provider.
 
 ### CO2.Storage and IPFS
 
-- AutoGreenGrants integrats purchasing carbon credit and carbon credit data is stored with purchasing transaction hash and pool info in CO2.Storage, it allows tracking positive impact of participants to environment within grants ecosystem.
-
-- Allo Protocol requires metadata for creating profile, creating pool, registering recipient, set milestones, submit milestone, and it takes IPFS hash, so all metadata is stored using web3.storage.
+- **Carbon Credit Data Storage:** When purchasing carbon credits, the transactional data—comprising the hash and pool info—is securely stored in CO2.Storage. This allows for transparent tracking of the positive environmental impacts contributed by participants.
+- **Metadata & IPFS:** Allo Protocol necessitates metadata for operations like profile creation, pool setup, recipient registration, milestone setting, etc. These metadata operations utilize IPFS hashes and are stored via web3.storage.
 
 ### Hypercert
 
-- AutoGreenGrants provides attestation using Hypercert, create Hypercert contains CO2.Storage asset ID, it makes tracking positive impact of participants more flexible and on-chain verifiable.
-
-- Reviewing can utilize attestation to make reputation-based reviewing in Allo Protocol, and this is potencial impact on grants ecosystem.
+- **Attestation:** We employ Hypercert for attestation purposes. A generated Hypercert encapsulates the CO2.Storage asset ID, enabling a more flexible tracking system that's also verifiable on-chain.
+- **Reputation-based Reviewing:** The attestation feature can be leveraged to execute reputation-based reviews within the Allo Protocol, potentially revolutionizing the grants ecosystem.
 
 ### Drip
 
-- AutoGreenGrants integrates Drip to split payout among team member.
+- **Team Payout Distribution:** AutoGreenGrants has integrated Drip to facilitate the equitable distribution of payouts among team members.
 
 ### BAT
 
-- AutoGreenGrants integrates BAT token as payment token.
+- **Payment Token:** The BAT token has been integrated and is used as the platform's primary payment token.
