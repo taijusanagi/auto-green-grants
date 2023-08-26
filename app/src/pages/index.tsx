@@ -231,7 +231,7 @@ export default function Home() {
                       <input
                         value={applicationId}
                         onChange={(e) => setApplicationId(e.target.value)}
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none mb-2"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         placeholder="Application ID"
                       />
                       <button
@@ -247,7 +247,7 @@ export default function Home() {
                       <input
                         value={submissionId}
                         onChange={(e) => setSubmissionId(e.target.value)}
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none mb-2"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         placeholder="Submission ID"
                       />
                       <button
@@ -273,7 +273,7 @@ export default function Home() {
                       <input
                         value={grantName}
                         onChange={(e) => setGrantName(e.target.value)}
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         placeholder="Name"
                       />
                     </div>
@@ -282,7 +282,7 @@ export default function Home() {
                       <textarea
                         value={grantDescription}
                         onChange={(e) => setGrantDescription(e.target.value)}
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         placeholder="Description"
                         rows={5}
                       ></textarea>
@@ -292,7 +292,7 @@ export default function Home() {
                       <input
                         value={grantToken}
                         onChange={(e) => setGrantToken(e.target.value)}
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         placeholder="Token"
                       />
                     </div>
@@ -301,7 +301,7 @@ export default function Home() {
                       <input
                         value={grantAmount}
                         onChange={(e) => setGrantAmount(e.target.value)}
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         placeholder="Amount"
                       />
                     </div>
@@ -310,7 +310,7 @@ export default function Home() {
                       <input
                         value={grantStrategy}
                         onChange={(e) => setGrantStrategy(e.target.value)}
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         placeholder="Strategy"
                         disabled={true}
                       />
@@ -539,7 +539,7 @@ export default function Home() {
                       value={grantId}
                       onChange={(e) => setGrantId(e.target.value)}
                       placeholder="Enter Grant ID"
-                      className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none mb-2"
+                      className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm mb-2"
                     />
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
@@ -554,7 +554,7 @@ export default function Home() {
                     <input
                       value={applicationId}
                       onChange={(e) => setApplicationId(e.target.value)}
-                      className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none mb-2"
+                      className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                       placeholder="Application ID"
                     />
 
@@ -581,7 +581,7 @@ export default function Home() {
                         value={teamName}
                         onChange={(e) => setTeamName(e.target.value)}
                         placeholder="Team Name"
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                       />
                     </div>
                     <div className="space-y-2">
@@ -590,7 +590,7 @@ export default function Home() {
                         value={teamDescription}
                         onChange={(e) => setTeamDescription(e.target.value)}
                         placeholder="Team Description"
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                         rows={5}
                       ></textarea>
                     </div>
@@ -603,7 +603,7 @@ export default function Home() {
                               value={member}
                               onChange={(e) => updateTeamMember(index, e.target.value)}
                               placeholder={`Member ${index + 1} Name`}
-                              className="flex-grow p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                              className="flex-grow p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                             />
                             {teamMembers.length > 1 && (
                               <button
@@ -703,7 +703,7 @@ export default function Home() {
                         value={referenceURL}
                         onChange={(e) => setReferenceURL(e.target.value)}
                         placeholder="Reference URL"
-                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 transition-shadow focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
                       />
                     </div>
                     <button
