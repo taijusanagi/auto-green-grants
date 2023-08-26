@@ -13,17 +13,19 @@ Driven by our mission to enhance the sustainability of grant distribution, we ai
 
 ## Live Application
 
-[Visit AutoGreenGrants](https://greengrant.vercel.app/)
+https://greengrant.vercel.app/
+
+## Pitch Deck
+
+https://docs.google.com/presentation/d/17jKICQBJbGnaEfGOp6Mx8G_FzpP4d6v-yA-tHc5fuFE/edit?usp=sharing
 
 ## Demo Video
 
 Coming Soon!
 
-## Pitch Deck
-
-Coming Soon!
-
 ## How It Works
+
+![how-it-works](./docs/how-it-works.png)
 
 ### Allo Protocol
 
