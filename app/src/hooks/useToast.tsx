@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 
 type ToastOptions = {
   message: string;
-  duration: number;
+  duration?: number;
 };
 
 export function useToast() {

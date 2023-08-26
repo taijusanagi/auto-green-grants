@@ -1,10 +1,22 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useToast } from "@/hooks/useToast";
 import { useEffect, useState } from "react";
+import { FaSpinner } from "react-icons/fa";
+import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
+
+import { useAllo } from "@/hooks/useAllo";
+import { useToast } from "@/hooks/useToast";
+import { useEthersSigner } from "@/hooks/useEthers";
+import { useAccount } from "wagmi";
+import { ethers } from "ethers";
+import { useDebug } from "@/hooks/useDebug";
 
 export default function Home() {
+  const { alloCoreContract, alloRegistryContract, directGrantsSimpleStrategy, deployDirectGrantsSimpleStrategy } =
+    useAllo();
+  const { address: userAddress } = useAccount();
+
+  const { debug, isDebugStarted, logs } = useDebug();
   const { toast, showToast } = useToast();
-  const [showAnimation, setShowAnimation] = useState(false);
 
   const [role, setRole] = useState<"sponsor" | "applicant">("sponsor");
 
@@ -18,7 +30,8 @@ export default function Home() {
   const [grantName, setGrantName] = useState("Grant Name");
   const [grantDescription, setGrantDescription] = useState("Grant Description");
   const [grantToken, setGrantToken] = useState("ETH");
-  const [grantAmount, setGrantAmount] = useState("0.01");
+  const [grantAmount, setGrantAmount] = useState("0.001");
+  const [grantStrategy, setGrantStrategy] = useState("DirectGrantsSimpleStrategy");
 
   const [grantId, setGrantId] = useState("");
 
@@ -81,17 +94,15 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (toast) {
-      setShowAnimation(true);
-      setTimeout(() => {
-        setShowAnimation(false);
-      }, toast.duration - 300);
+    if (isDebugStarted || isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto"; // or 'visible' if you want
     }
-  }, [toast]);
-
-  const computedToastClassNames = showAnimation
-    ? "opacity-100 transition-opacity duration-300"
-    : "opacity-0 transition-opacity duration-300";
+    return () => {
+      document.body.style.overflow = "auto"; // reset on unmount
+    };
+  }, [isDebugStarted, isModalOpen]);
 
   const dummyMetadata = {
     protocol: 1,
@@ -100,13 +111,31 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-700 to-gray-950 font-poppins">
-      <header className="sticky top-0 flex justify-end items-center w-full p-4">
-        <button className="px-6 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700">Connect Wallet</button>
-      </header>
-      <div
-        className={`fixed top-4 right-4 w-96 bg-purple-800 text-white p-4 rounded-lg shadow-md z-50 transition-all duration-300 transform ease-in-out opacity-100 ${computedToastClassNames}`}
-      >
-        {toast?.message}
+      {isDebugStarted && (
+        <div className="fixed top-0 left-0 w-full h-screen bg-black bg-opacity-50 flex flex-col items-center justify-center z-50">
+          <div className="max-w-4xl w-full bg-black p-4 rounded-lg shadow-2xl break-all">
+            <div className="flex justify-between items-center text-white text-sm align-left mb-2">
+              {"Logs"} <FaSpinner className="text-white text-sm animate-spin" />
+            </div>
+            {logs.map((log, i) => {
+              return (
+                <p key={`log_${i}`} className="text-green-600 text-xs align-left">
+                  {`>> ${log}`}
+                </p>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 w-80 bg-red-800 text-white p-4 rounded-lg shadow-2xl z-50 text-xs break-all`}
+        >
+          {toast.message.length > 200 ? toast.message.substring(0, 200) : toast.message}
+        </div>
+      )}
+      <div className="flex justify-end items-center w-full p-4">
+        <ConnectButton />
       </div>
       <div className="flex flex-col justify-center items-center py-12">
         <div className="mb-6 flex justify-end items-center w-full max-w-xl px-4">
@@ -129,7 +158,7 @@ export default function Home() {
             </button>
           </nav>
         </div>
-        <div className="bg-transparent backdrop-blur-lg p-10 rounded-lg shadow-md w-full max-w-xl mx-auto space-y-6">
+        <div className="bg-transparent backdrop-blur-lg p-10 rounded-lg shadow-2xl w-full max-w-xl mx-auto space-y-6">
           {role === "sponsor" && (
             <>
               {sponsorAction === "default" && (
@@ -193,7 +222,7 @@ export default function Home() {
                         value={grantName}
                         onChange={(e) => setGrantName(e.target.value)}
                         className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
-                        placeholder="Grant Name"
+                        placeholder="Name"
                       />
                     </div>
                     <div className="space-y-2">
@@ -202,7 +231,7 @@ export default function Home() {
                         value={grantDescription}
                         onChange={(e) => setGrantDescription(e.target.value)}
                         className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
-                        placeholder="Grant Description"
+                        placeholder="Description"
                         rows={5}
                       ></textarea>
                     </div>
@@ -212,7 +241,7 @@ export default function Home() {
                         value={grantToken}
                         onChange={(e) => setGrantToken(e.target.value)}
                         className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
-                        placeholder="Grant Name"
+                        placeholder="Token"
                       />
                     </div>
                     <div className="space-y-2">
@@ -221,17 +250,81 @@ export default function Home() {
                         value={grantAmount}
                         onChange={(e) => setGrantAmount(e.target.value)}
                         className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
-                        placeholder="Grant Name"
+                        placeholder="Amount"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-semibold text-white">Strategy</p>
+                      <input
+                        value={grantStrategy}
+                        onChange={(e) => setGrantStrategy(e.target.value)}
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                        placeholder="Strategy"
+                        disabled={true}
                       />
                     </div>
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
-                      onClick={() => {
-                        const grantId = "grantId";
-                        setGrantId(grantId);
-                        setModalTitle("Grant Created");
-                        setModalDescription("Your grant has been created successfully!");
-                        setIsModalOpen(true);
+                      onClick={async () => {
+                        if (!userAddress || !alloCoreContract || !alloRegistryContract) {
+                          showToast({
+                            message: "Please connect your wallet and ensure it is set to the Goerli testnet.",
+                          });
+                          return;
+                        }
+                        try {
+                          debug.start();
+                          debug.log("Sponsor: createProfile");
+                          const randomNonce = ethers.utils.randomBytes(32);
+                          const createSponsorProfileTx = await alloRegistryContract.createProfile(
+                            randomNonce,
+                            "Pool Creator Profile",
+                            { ...dummyMetadata },
+                            userAddress,
+                            []
+                          );
+                          debug.log("createSponsorProfileTx.hash", createSponsorProfileTx.hash);
+
+                          const createSponsorProfileReceipt = await createSponsorProfileTx.wait();
+                          const sponsorProfileId =
+                            createSponsorProfileReceipt.events?.[createSponsorProfileReceipt.events.length - 1].args
+                              ?.profileId;
+                          const sponsorAlloAnchorAddress =
+                            createSponsorProfileReceipt.events?.[createSponsorProfileReceipt.events.length - 1].args
+                              ?.anchor;
+
+                          debug.log("sponsorProfileId", sponsorProfileId);
+                          debug.log("sponsorAlloAnchorAddress", sponsorAlloAnchorAddress);
+
+                          debug.log("Sponsor: deploy DirectGrantsSimpleStrategy");
+                          const directGrantsSimpleStrategy = await deployDirectGrantsSimpleStrategy();
+
+                          debug.log("Sponsor: createPoolWithCustomStrategy");
+                          const createPoolTx = await alloCoreContract.createPoolWithCustomStrategy(
+                            sponsorProfileId,
+                            directGrantsSimpleStrategy.address,
+                            // Encode data for (bool _registryGating, bool _metadataRequired, bool _grantAmountRequired)
+                            ethers.utils.defaultAbiCoder.encode(["bool", "bool", "bool"], [true, true, false]),
+                            "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                            ethers.utils.parseEther(grantAmount),
+                            { ...dummyMetadata },
+                            [],
+                            { value: ethers.utils.parseEther(grantAmount) }
+                          );
+                          debug.log("createSponsorProfileTx.hash", createSponsorProfileTx.hash);
+
+                          const createPoolRecipt = await createPoolTx.wait();
+                          const grantId = createPoolRecipt.events?.[createPoolRecipt.events.length - 1].args?.poolId;
+                          debug.log("grantId", grantId);
+                          setGrantId(grantId);
+                          setModalTitle("Grant Created");
+                          setModalDescription("Your grant has been created successfully!");
+                          setIsModalOpen(true);
+                        } catch (e: any) {
+                          showToast({ message: e.message });
+                        } finally {
+                          debug.end();
+                        }
                       }}
                     >
                       Create
@@ -247,15 +340,15 @@ export default function Home() {
                   <h1 className="text-4xl font-semibold mb-6 text-white">Review Application</h1>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Name:</h2>
+                      <h2 className="text-2xl font-semibold text-white">Team Name</h2>
                       <p className="text-white">{teamName}</p>
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Description:</h2>
+                      <h2 className="text-2xl font-semibold text-white">Team Description</h2>
                       <p className="text-white">{teamDescription}</p>
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Members:</h2>
+                      <h2 className="text-2xl font-semibold text-white">Team Members</h2>
                       <ul>
                         {teamMembers.map((member, index) => (
                           <li key={index} className="text-white">
@@ -472,7 +565,7 @@ export default function Home() {
       {isModalOpen && (
         <div className="fixed z-50 top-0 left-0 w-full h-full flex justify-center items-center">
           <div className="bg-black bg-opacity-75 absolute w-full h-full" onClick={closeModal}></div>
-          <div className="bg-gradient-to-br from-gray-700 to-gray-950 px-8 py-6 rounded-lg shadow-md w-full max-w-md z-10 space-y-4">
+          <div className="bg-gradient-to-br from-gray-700 to-gray-950 px-8 py-6 rounded-lg shadow-2xl w-full max-w-md z-10 space-y-4">
             <h2 className="text-2xl font-semibold text-white">{modalTitle}</h2>
             <p className="text-white">{modalDescription}</p>
             <button className="w-full p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700" onClick={closeModal}>
