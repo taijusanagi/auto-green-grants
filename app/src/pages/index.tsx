@@ -5,12 +5,13 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { useAllo } from "@/hooks/useAllo";
 import { useCarbonOffset } from "@/hooks/useCarbonOffset";
-import { useCO2Storage } from "@/hooks/useCO2Storage";
 import { useToast } from "@/hooks/useToast";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
 import { useDebug } from "@/hooks/useDebug";
 import { utils } from "@/lib/allo";
+
+import { useHyperCert } from "@/hooks/useHyperCert";
 
 export default function Home() {
   const {
@@ -21,7 +22,7 @@ export default function Home() {
     attachDirectGrantsSimpleStrategy,
   } = useAllo();
   const { carbonOffset } = useCarbonOffset();
-  const { co2Storage } = useCO2Storage();
+  const { hyperCert } = useHyperCert();
 
   const { address: userAddress } = useAccount();
 
@@ -508,7 +509,7 @@ export default function Home() {
                           !alloCoreContract ||
                           !directGrantsSimpleStrategy ||
                           !carbonOffset ||
-                          !co2Storage
+                          !hyperCert
                         ) {
                           showToast({
                             message: "Please connect your wallet and ensure it is set to the Goerli testnet.",
@@ -533,6 +534,7 @@ export default function Home() {
                           // });
                           // debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
                           // purchaseCarbonOffsetTx.wait();
+
                           const purchaseCarbonOffsetTx = {
                             hash: "hash",
                           };
@@ -553,8 +555,40 @@ export default function Home() {
                           } = await response.json();
                           debug.log("CO2 Storage Asset ID", assetId);
 
-                          // TODO: integrate hypercert
+                          const sdk = await import("@hypercerts-org/sdk");
+                          const { formatHypercertData, TransferRestrictions } = sdk;
 
+                          // TODO: integrate hypercert
+                          const { data: metadata } = formatHypercertData({
+                            name: "",
+                            description: "",
+                            external_url: `ipfs://${assetId}`,
+                            version: "0.0.1",
+                            image: "",
+                            workScope: ["IPFS"],
+                            excludedWorkScope: [],
+                            impactScope: ["All"],
+                            excludedImpactScope: [],
+                            workTimeframeStart: 1380585600,
+                            workTimeframeEnd: 1388534399,
+                            impactTimeframeStart: 1380585600,
+                            impactTimeframeEnd: 0,
+                            contributors: [],
+                            rights: [],
+                            excludedRights: [],
+                          });
+                          if (!metadata) {
+                            throw new Error("Hypercert metadata invalid");
+                          }
+                          const totalUnits = 5;
+                          const transferRestrictions = TransferRestrictions.DisallowAll;
+                          const hyperCertMintClaimTx = await hyperCert.mintClaim(
+                            metadata,
+                            totalUnits,
+                            transferRestrictions,
+                          );
+                          debug.log("hyperCertMintClaimTx.hash", hyperCertMintClaimTx.hash);
+                          await hyperCertMintClaimTx.wait();
                           // console.log("Sponsor: setPoolActive");
                           // const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
                           // debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);

@@ -64,6 +64,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     throw new Error(addAssetResponse.error);
   }
   const assetId = addAssetResponse.result.block;
-  console.log(assetId);
   res.status(200).json({ result: { assetId } });
 }

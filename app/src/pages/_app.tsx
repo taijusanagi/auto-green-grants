@@ -11,8 +11,8 @@ import { publicProvider } from "wagmi/providers/public";
 const { chains, publicClient } = configureChains([goerli], [publicProvider()]);
 
 const { connectors } = getDefaultWallets({
-  appName: "HyperFund",
-  projectId: "HYPER_FUND",
+  appName: "GreenGrant",
+  projectId: "GreenGrant",
   chains,
 });
 
