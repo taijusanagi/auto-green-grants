@@ -1,18 +1,23 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useEffect, useState } from "react";
 import { FaSpinner } from "react-icons/fa";
-import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { useAllo } from "@/hooks/useAllo";
 import { useToast } from "@/hooks/useToast";
-import { useEthersSigner } from "@/hooks/useEthers";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
 import { useDebug } from "@/hooks/useDebug";
+import { utils } from "@/lib/allo";
 
 export default function Home() {
-  const { alloCoreContract, alloRegistryContract, directGrantsSimpleStrategy, deployDirectGrantsSimpleStrategy } =
-    useAllo();
+  const {
+    alloCoreContract,
+    alloRegistryContract,
+    directGrantsSimpleStrategy,
+    deployDirectGrantsSimpleStrategy,
+    attachDirectGrantsSimpleStrategy,
+  } = useAllo();
   const { address: userAddress } = useAccount();
 
   const { debug, isDebugStarted, logs } = useDebug();
@@ -35,13 +40,17 @@ export default function Home() {
 
   const [grantId, setGrantId] = useState("");
 
-  const [teamName, setTeamName] = useState("");
-  const [teamMembers, setTeamMembers] = useState([""]);
-  const [teamDescription, setTeamDescription] = useState("");
+  const [teamName, setTeamName] = useState("Team Name");
+  const [teamDescription, setTeamDescription] = useState("Team Description");
+  const [teamMembers, setTeamMembers] = useState(["0x3dAf2eAE4Fe3232Ed8a29c5e1be6eEba81C1CFD6"]);
+  const [applicantId, setApplicantId] = useState("");
+
   const [applicationId, setApplicationId] = useState("");
   const [isApplicationReviewed, setIsApplicationReviewed] = useState(false);
   const [referenceURL, setReferenceURL] = useState("");
+  const [milestoneId, setMilestoneId] = useState(0);
   const [submissionId, setSubmissionId] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmissionReviewed, setIsSubmissionReviewed] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,6 +103,50 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (!alloCoreContract || !grantId || !applicantId) {
+      return;
+    }
+    alloCoreContract.getPool(grantId).then((pool) => {
+      const directGrantsSimpleStrategy = attachDirectGrantsSimpleStrategy(pool.strategy);
+      directGrantsSimpleStrategy.getRecipientStatus(applicantId).then((status) => {
+        setIsApplicationReviewed(status === utils.STATUS.ACCEPTED);
+      });
+      directGrantsSimpleStrategy.getMilestones(applicantId).then((milestones) => {
+        console.log("milestones", milestones);
+        if (milestones.length > 0) {
+          console.log("milestones[0].milestoneStatus", milestones[0].milestoneStatus);
+          setIsSubmitted(milestones[0].milestoneStatus === utils.STATUS.PENDING);
+          setIsSubmissionReviewed(milestones[0].milestoneStatus === utils.STATUS.ACCEPTED);
+        }
+      });
+    });
+  }, [alloCoreContract, grantId, applicantId]);
+
+  useEffect(() => {
+    if (!applicationId) {
+      return;
+    }
+    const [grantId, applicantId] = applicationId.split(":");
+    if (!grantId || !applicantId) {
+      return;
+    }
+    setGrantId(grantId);
+    setApplicantId(applicantId);
+  }, [applicationId]);
+
+  useEffect(() => {
+    if (!submissionId) {
+      return;
+    }
+    const [grantId, applicantId, milestoneId] = submissionId.split(":");
+    if (!grantId || !applicantId || !milestoneId) {
+      return;
+    }
+    setApplicationId(`${grantId}:${applicantId}`);
+    setMilestoneId(Number(milestoneId));
+  }, [submissionId]);
+
+  useEffect(() => {
     if (isDebugStarted || isModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -113,7 +166,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-700 to-gray-950 font-poppins">
       {isDebugStarted && (
         <div className="fixed top-0 left-0 w-full h-screen bg-black bg-opacity-50 flex flex-col items-center justify-center z-50">
-          <div className="max-w-4xl w-full bg-black p-4 rounded-lg shadow-2xl break-all">
+          <div className="max-w-3xl w-full bg-black p-4 rounded-lg shadow-2xl break-all">
             <div className="flex justify-between items-center text-white text-sm align-left mb-2">
               {"Logs"} <FaSpinner className="text-white text-sm animate-spin" />
             </div>
@@ -169,7 +222,6 @@ export default function Home() {
                       <button
                         className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                         onClick={() => setSponsorAction("createGrant")}
-                        disabled={!!grantId}
                       >
                         Create Grant
                       </button>
@@ -187,7 +239,7 @@ export default function Home() {
                         onClick={() => setSponsorAction("reviewApplication")}
                         disabled={!applicationId || isApplicationReviewed}
                       >
-                        Review Application
+                        {!isApplicationReviewed ? "Review Application" : "Already Reviewed"}
                       </button>
                     </div>
                     <div className="space-y-2">
@@ -201,9 +253,9 @@ export default function Home() {
                       <button
                         className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                         onClick={() => setSponsorAction("reviewSubmission")}
-                        disabled={!submissionId || isSubmissionReviewed}
+                        disabled={!submissionId || !isSubmitted || isSubmissionReviewed}
                       >
-                        Review Submission
+                        {!isSubmissionReviewed ? "Review Submission" : "Already Reviewed"}
                       </button>
                     </div>
                   </div>
@@ -275,6 +327,7 @@ export default function Home() {
                         try {
                           debug.start();
                           debug.log("Sponsor: createProfile");
+                          // use random nance for easy demo
                           const randomNonce = ethers.utils.randomBytes(32);
                           const createSponsorProfileTx = await alloRegistryContract.createProfile(
                             randomNonce,
@@ -311,7 +364,7 @@ export default function Home() {
                             [],
                             { value: ethers.utils.parseEther(grantAmount) }
                           );
-                          debug.log("createSponsorProfileTx.hash", createSponsorProfileTx.hash);
+                          debug.log("createPoolTx.hash", createPoolTx.hash);
 
                           const createPoolRecipt = await createPoolTx.wait();
                           const grantId = createPoolRecipt.events?.[createPoolRecipt.events.length - 1].args?.poolId;
@@ -359,11 +412,36 @@ export default function Home() {
                     </div>
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
-                      onClick={() => {
-                        setIsApplicationReviewed(true);
-                        setModalTitle("Application Confirmed");
-                        setModalDescription("You've successfully confirmed the application!");
-                        setIsModalOpen(true);
+                      onClick={async () => {
+                        if (!userAddress || !alloCoreContract || !alloRegistryContract) {
+                          showToast({
+                            message: "Please connect your wallet and ensure it is set to the Goerli testnet.",
+                          });
+                          return;
+                        }
+                        try {
+                          debug.start();
+                          debug.log("Sponsor: allocate");
+                          const [grantId, recipientId] = applicationId.split(":");
+                          const allocateTx = await alloCoreContract.allocate(
+                            grantId,
+                            // Encode for (address recipientId, InternalRecipientStatus recipientStatus, uint256 grantAmount)
+                            ethers.utils.defaultAbiCoder.encode(
+                              ["address", "uint256", "uint256"],
+                              [recipientId, utils.STATUS.ACCEPTED, ethers.utils.parseEther(grantAmount)]
+                            )
+                          );
+                          debug.log("allocateTx.hash", allocateTx.hash);
+                          await allocateTx.wait();
+                          setIsApplicationReviewed(true);
+                          setModalTitle("Application Confirmed");
+                          setModalDescription("You've successfully confirmed the application!");
+                          setIsModalOpen(true);
+                        } catch (e: any) {
+                          showToast({ message: e.message });
+                        } finally {
+                          debug.end();
+                        }
                       }}
                     >
                       Confirm Application
@@ -406,11 +484,38 @@ export default function Home() {
                     </div>
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
-                      onClick={() => {
-                        setIsSubmissionReviewed(true);
-                        setModalTitle("Submission Approved");
-                        setModalDescription("The submission has been approved successfully!");
-                        setIsModalOpen(true);
+                      onClick={async () => {
+                        if (!userAddress || !alloCoreContract || !directGrantsSimpleStrategy) {
+                          showToast({
+                            message: "Please connect your wallet and ensure it is set to the Goerli testnet.",
+                          });
+                          return;
+                        }
+                        try {
+                          debug.start();
+                          debug.log("Sponsor: distribute");
+                          const distributeTx = await alloCoreContract.distribute(
+                            grantId,
+                            [applicantId],
+                            utils.NULL_BYTES
+                          );
+                          debug.log("distributeTx.hash", distributeTx.hash);
+                          await distributeTx.wait();
+
+                          console.log("Sponsor: setPoolActive");
+                          const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
+                          debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
+                          await setPoolActiveToFalseTx.wait();
+
+                          setIsSubmissionReviewed(true);
+                          setModalTitle("Submission Approved");
+                          setModalDescription("The submission has been approved successfully!");
+                          setIsModalOpen(true);
+                        } catch (e: any) {
+                          showToast({ message: e.message });
+                        } finally {
+                          debug.end();
+                        }
                       }}
                     >
                       Approve
@@ -436,7 +541,7 @@ export default function Home() {
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => setApplicantAction("applyForGrant")}
-                      disabled={!grantId || !!applicationId}
+                      disabled={!grantId}
                     >
                       Apply for Grant
                     </button>
@@ -453,9 +558,9 @@ export default function Home() {
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={() => setApplicantAction("submitToGrant")}
-                      disabled={!applicationId || !isApplicationReviewed || !!submissionId}
+                      disabled={!applicationId || !isApplicationReviewed || isSubmitted}
                     >
-                      Submit to Grant
+                      {!isSubmitted ? "Submit to Grant" : "Already Submitted"}
                     </button>
                   </div>
                 </div>
@@ -514,12 +619,66 @@ export default function Home() {
                     </div>
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
-                      onClick={() => {
-                        const applicationId = "applicationId";
-                        setApplicationId(applicationId);
-                        setModalTitle("Application Submitted");
-                        setModalDescription("Your application has been submitted successfully!");
-                        setIsModalOpen(true);
+                      onClick={async () => {
+                        if (!userAddress || !alloCoreContract || !alloRegistryContract) {
+                          showToast({
+                            message: "Please connect your wallet and ensure it is set to the Goerli testnet.",
+                          });
+                          return;
+                        }
+                        try {
+                          debug.start();
+                          debug.log("Applicant: createProfile");
+                          // use random nance for easy demo
+                          const randomNance = ethers.utils.randomBytes(32);
+                          const createApplicantProfileTx = await alloRegistryContract.createProfile(
+                            randomNance,
+                            "Applicant Profile",
+                            dummyMetadata,
+                            userAddress,
+                            []
+                          );
+                          debug.log("createApplicantProfileTx.hash", createApplicantProfileTx.hash);
+                          const createApplicantProfileReceipt = await createApplicantProfileTx.wait();
+                          const applicantProfileId =
+                            createApplicantProfileReceipt.events?.[createApplicantProfileReceipt.events.length - 1].args
+                              ?.profileId;
+                          const applicantAlloAnchorAddress =
+                            createApplicantProfileReceipt.events?.[createApplicantProfileReceipt.events.length - 1].args
+                              ?.anchor;
+
+                          debug.log("applicantProfileId", applicantProfileId);
+                          debug.log("applicantAlloAnchorAddress", applicantAlloAnchorAddress);
+
+                          debug.log("Applicant: registerRecipient");
+                          const registerRecipientTx = await alloCoreContract.registerRecipient(
+                            grantId,
+                            // Encode data for (address recipientId, address recipientAddress, uint256 grantAmount, Metadata metadata)
+                            ethers.utils.defaultAbiCoder.encode(
+                              ["address", "address", "uint256", "tuple(uint256, string)"],
+                              [
+                                applicantAlloAnchorAddress,
+                                userAddress,
+                                0,
+                                [dummyMetadata.protocol, dummyMetadata.pointer],
+                              ]
+                            )
+                          );
+                          debug.log("registerRecipientTx.hash", registerRecipientTx.hash);
+                          await registerRecipientTx.wait();
+
+                          const applicationId = `${grantId}:${applicantAlloAnchorAddress}`;
+                          debug.log("applicationId", applicationId);
+                          setApplicantId(applicantAlloAnchorAddress);
+                          setApplicationId(applicationId);
+                          setModalTitle("Application Submitted");
+                          setModalDescription("Your application has been submitted successfully!");
+                          setIsModalOpen(true);
+                        } catch (e: any) {
+                          showToast({ message: e.message });
+                        } finally {
+                          debug.end();
+                        }
                       }}
                     >
                       Submit Application
@@ -545,12 +704,47 @@ export default function Home() {
                     </div>
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
-                      onClick={() => {
-                        const submissionId = "submissionId";
-                        setSubmissionId(submissionId);
-                        setModalTitle("Submission Complete");
-                        setModalDescription("Your reference has been submitted successfully!");
-                        setIsModalOpen(true);
+                      onClick={async () => {
+                        if (!directGrantsSimpleStrategy) {
+                          return;
+                        }
+                        try {
+                          debug.start();
+                          debug.log("Applicant: setMilestones");
+                          // Just create sigle milestone for demo
+                          const setMilestonesTx = await directGrantsSimpleStrategy.setMilestones(applicantId, [
+                            {
+                              amountPercentage: utils.AMOUNT_PERCENTAGE_BASE,
+                              metadata: { ...dummyMetadata },
+                              milestoneStatus: utils.STATUS.NONE,
+                            },
+                          ]);
+                          debug.log("setMilestonesTx.hash", setMilestonesTx.hash);
+                          await setMilestonesTx.wait();
+
+                          debug.log("Applicant: submitMilestone");
+                          const milestoneId = 0;
+                          const submitMilestoneTx = await directGrantsSimpleStrategy.submitMilestone(
+                            applicantId,
+                            milestoneId,
+                            {
+                              ...dummyMetadata,
+                            }
+                          );
+                          await submitMilestoneTx.wait();
+
+                          const submissionId = `${grantId}:${applicantId}:${milestoneId}`;
+                          setIsSubmitted(true);
+                          setMilestoneId(milestoneId);
+                          setSubmissionId(submissionId);
+                          setModalTitle("Submission Complete");
+                          setModalDescription("Your reference has been submitted successfully!");
+                          setIsModalOpen(true);
+                        } catch (e: any) {
+                          showToast({ message: e.message });
+                        } finally {
+                          debug.end();
+                        }
                       }}
                     >
                       Submit

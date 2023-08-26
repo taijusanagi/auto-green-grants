@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useEthersSigner } from "@/hooks/useEthers";
+import { useEthersProvider, useEthersSigner } from "@/hooks/useEthers";
 import {
   ALLO_CORE_ADDRESS,
   Allo__factory,
@@ -17,6 +17,7 @@ import { ContractFactory, ethers } from "ethers";
 export const useAllo = () => {
   const { chain } = useNetwork();
   const ethersSigner = useEthersSigner();
+  const ethersProvider = useEthersProvider();
   const [alloCoreContract, setAlloCoreContract] = useState<Allo>();
   const [alloRegistryContract, setAlloRegistryContract] = useState<Registry>();
   const [directGrantsSimpleStrategy, setDirectGrantsSimpleStrategy] = useState<DirectGrantsSimpleStrategy>();
@@ -47,5 +48,17 @@ export const useAllo = () => {
     return result;
   };
 
-  return { alloCoreContract, alloRegistryContract, directGrantsSimpleStrategy, deployDirectGrantsSimpleStrategy };
+  const attachDirectGrantsSimpleStrategy = (address: string) => {
+    const result = DirectGrantsSimpleStrategy__factory.connect(address, ethersSigner || ethersProvider);
+    setDirectGrantsSimpleStrategy(result);
+    return result;
+  };
+
+  return {
+    alloCoreContract,
+    alloRegistryContract,
+    directGrantsSimpleStrategy,
+    deployDirectGrantsSimpleStrategy,
+    attachDirectGrantsSimpleStrategy,
+  };
 };
