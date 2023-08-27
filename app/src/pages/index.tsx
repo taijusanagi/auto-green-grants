@@ -17,11 +17,13 @@ const web3StorageClient = new Web3Storage({ token: process.env.NEXT_PUBLIC_WEB3_
 
 const symbolToAddress = {
   ETH: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+  USDC: "0x2f3A40A3db8a7e3D09B0adfEfbCe4f6F81927557",
   BAT: "0x70cBa46d2e933030E2f274AE58c951C800548AeF",
 } as any;
 
 const addressToSymbol = {
   "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE": "ETH",
+  "0x2f3A40A3db8a7e3D09B0adfEfbCe4f6F81927557": "USCD",
   "0x70cBa46d2e933030E2f274AE58c951C800548AeF": "BAT",
 } as any;
 
@@ -376,12 +378,17 @@ export default function Home() {
                     </div>
                     <div className="space-y-2">
                       <p className="text-xl font-semibold text-white">Token</p>
-                      <input
+                      <select
                         value={grantToken}
                         onChange={(e) => setGrantToken(e.target.value)}
                         className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
-                        placeholder="Token"
-                      />
+                      >
+                        {Object.keys(symbolToAddress).map((symbol) => (
+                          <option key={symbol} value={symbol}>
+                            {symbol}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="space-y-2">
                       <p className="text-xl font-semibold text-white">Amount</p>
@@ -423,7 +430,11 @@ export default function Home() {
                           });
                           return;
                         }
+
                         try {
+                          if (grantToken !== "ETH") {
+                            throw new Error("Only ETH is integrated for demo due to testnet limitations, sorry!");
+                          }
                           debug.start();
                           debug.log(`Sponsor: ${userAddress}`);
                           debug.log("Sponsor: createProfile");
@@ -693,7 +704,7 @@ export default function Home() {
                               "Auto Green Grant Contributor, Please check external URL to check the data on CO2.storage",
                             external_url: `https://co2.storage/assets/${assetId}`, // link to co2.storage asset
                             version: "0.0.1",
-                            image: defaultImage,
+                            image: defaultImage, // image generation is out of scope, so use static image
                             workScope: ["GreenGrant"],
                             excludedWorkScope: [],
                             impactScope: ["All"], // Asset id witch has
