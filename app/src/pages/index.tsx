@@ -894,6 +894,7 @@ export default function Home() {
                           debug.start();
                           debug.log(`Applicant: ${userAddress}`);
                           debug.log("Applicant: createProfile");
+
                           const createProfileMetadtaCID = await web3StorageClient.put([
                             new File(
                               [
@@ -912,7 +913,7 @@ export default function Home() {
                             "Applicant Profile",
                             { protocol: 1, pointer: createProfileMetadtaCID },
                             userAddress,
-                            teamMembers,
+                            teamMembers.filter((v) => v),
                           );
                           debug.log("createApplicantProfileTx.hash", createApplicantProfileTx.hash);
                           const createApplicantProfileReceipt = await createApplicantProfileTx.wait();
@@ -936,8 +937,8 @@ export default function Home() {
                                       teamName,
                                       teamDescription,
                                       teamMembers: !teamMembers.includes(userAddress)
-                                        ? [userAddress, ...teamMembers]
-                                        : [userAddress],
+                                        ? [userAddress, ...teamMembers.filter((v) => v)]
+                                        : teamMembers.filter((v) => v),
                                     }),
                                   ],
                                   {
