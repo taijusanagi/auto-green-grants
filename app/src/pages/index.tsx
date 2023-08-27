@@ -11,6 +11,7 @@ import { useDebug } from "@/hooks/useDebug";
 import { utils } from "@/lib/allo";
 import { useHyperCert } from "@/hooks/useHyperCert";
 import { Web3Storage } from "web3.storage";
+import { defaultImage } from "@/lib/hypercert";
 
 const web3StorageClient = new Web3Storage({ token: process.env.NEXT_PUBLIC_WEB3_STORAGE_API_KEY || "" });
 
@@ -65,7 +66,7 @@ export default function Home() {
 
   const [applicationId, setApplicationId] = useState("");
   const [isApplicationReviewed, setIsApplicationReviewed] = useState(false);
-  const [referenceURL, setReferenceURL] = useState("");
+  const [referenceURL, setReferenceURL] = useState("http://localhost:3000");
   const [milestoneId, setMilestoneId] = useState(0);
   const [submissionId, setSubmissionId] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -650,47 +651,49 @@ export default function Home() {
                         try {
                           debug.start();
                           debug.log(`Sponsor: ${userAddress}`);
-                          debug.log("Sponsor: distribute");
-                          const distributeTx = await alloCoreContract.distribute(
-                            grantId,
-                            [applicantId],
-                            utils.NULL_BYTES,
-                          );
-                          debug.log("distributeTx.hash", distributeTx.hash);
-                          await distributeTx.wait();
+                          // debug.log("Sponsor: distribute");
+                          // const distributeTx = await alloCoreContract.distribute(
+                          //   grantId,
+                          //   [applicantId],
+                          //   utils.NULL_BYTES,
+                          // );
+                          // debug.log("distributeTx.hash", distributeTx.hash);
+                          // await distributeTx.wait();
 
-                          debug.log("Sponsor: purchaseCarbonOffset");
-                          const purchaseCarbonOffsetTx = await carbonOffset.purchase({
-                            value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
-                          });
-                          debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
-                          purchaseCarbonOffsetTx.wait();
+                          // debug.log("Sponsor: purchaseCarbonOffset");
+                          // const purchaseCarbonOffsetTx = await carbonOffset.purchase({
+                          //   value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
+                          // });
+                          // debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
+                          // purchaseCarbonOffsetTx.wait();
 
-                          debug.log("Sponsor: verifyCarbonOffsetTxAndCreateCO2StorageData");
-                          const response = await fetch("/api/verifyCarbonOffsetTxAndCreateCO2StorageData", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({ hash: purchaseCarbonOffsetTx.hash, grantId }),
-                          });
-                          if (!response.ok) {
-                            throw new Error("Network response was not ok");
-                          }
-                          const {
-                            result: { assetId },
-                          } = await response.json();
-                          debug.log("CO2 Storage Asset ID", assetId);
+                          // debug.log("Sponsor: verifyCarbonOffsetTxAndCreateCO2StorageData");
+                          // const response = await fetch("/api/verifyCarbonOffsetTxAndCreateCO2StorageData", {
+                          //   method: "POST",
+                          //   headers: {
+                          //     "Content-Type": "application/json",
+                          //   },
+                          //   body: JSON.stringify({ hash: purchaseCarbonOffsetTx.hash, grantId }),
+                          // });
+                          // if (!response.ok) {
+                          //   throw new Error("Network response was not ok");
+                          // }
+                          // const {
+                          //   result: { assetId },
+                          // } = await response.json();
+                          // debug.log("CO2 Storage Asset ID", assetId);
+                          const assetId = "assetId";
 
                           const sdk = await import("@hypercerts-org/sdk");
                           const { formatHypercertData, TransferRestrictions } = sdk;
 
                           const { data: metadata } = formatHypercertData({
-                            name: "Green Grant",
-                            description: "Green Grant Contributer",
-                            external_url: `ipfs://${assetId}`, // link to co2.storage asset
+                            name: "Auto Green Grant",
+                            description:
+                              "Auto Green Grant Contributor, Please check external URL to check the data on CO2.storage",
+                            external_url: `https://co2.storage/assets/${assetId}`, // link to co2.storage asset
                             version: "0.0.1",
-                            image: "",
+                            image: defaultImage,
                             workScope: ["GreenGrant"],
                             excludedWorkScope: [],
                             impactScope: ["All"], // Asset id witch has
@@ -699,15 +702,17 @@ export default function Home() {
                             workTimeframeEnd: new Date().getTime() / 1000, // use current
                             impactTimeframeStart: new Date().getTime() / 1000, // use current
                             impactTimeframeEnd: new Date().getTime() / 1000, // use current
-                            contributors: [], // add members
+                            contributors: teamMembers, // add members
                             rights: [], // out of scope
                             excludedRights: [], // out of scope
                           });
                           if (!metadata) {
                             throw new Error("Hypercert metadata invalid");
                           }
+                          console.log(metadata);
                           const totalUnits = 5;
                           const transferRestrictions = TransferRestrictions.DisallowAll;
+
                           const hyperCertMintClaimTx = await hyperCert.mintClaim(
                             metadata,
                             totalUnits,
@@ -715,10 +720,10 @@ export default function Home() {
                           );
                           debug.log("hyperCertMintClaimTx.hash", hyperCertMintClaimTx.hash);
                           await hyperCertMintClaimTx.wait();
-                          console.log("Sponsor: setPoolActive");
-                          const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
-                          debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
-                          await setPoolActiveToFalseTx.wait();
+                          // console.log("Sponsor: setPoolActive");
+                          // const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
+                          // debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
+                          // await setPoolActiveToFalseTx.wait();
 
                           setIsSubmissionReviewed(true);
                           setModalTitle("Submission Approved");
