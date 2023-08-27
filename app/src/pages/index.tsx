@@ -64,6 +64,7 @@ export default function Home() {
   const [teamName, setTeamName] = useState("Team Name");
   const [teamDescription, setTeamDescription] = useState("Team Description");
   const [teamMembers, setTeamMembers] = useState([""]);
+  const [dripAddress, setDripAddress] = useState("");
   const [applicantId, setApplicantId] = useState("");
 
   const [applicationId, setApplicationId] = useState("");
@@ -662,38 +663,37 @@ export default function Home() {
                         try {
                           debug.start();
                           debug.log(`Sponsor: ${userAddress}`);
-                          // debug.log("Sponsor: distribute");
-                          // const distributeTx = await alloCoreContract.distribute(
-                          //   grantId,
-                          //   [applicantId],
-                          //   utils.NULL_BYTES,
-                          // );
-                          // debug.log("distributeTx.hash", distributeTx.hash);
-                          // await distributeTx.wait();
+                          debug.log("Sponsor: distribute");
+                          const distributeTx = await alloCoreContract.distribute(
+                            grantId,
+                            [applicantId],
+                            utils.NULL_BYTES,
+                          );
+                          debug.log("distributeTx.hash", distributeTx.hash);
+                          await distributeTx.wait();
 
-                          // debug.log("Sponsor: purchaseCarbonOffset");
-                          // const purchaseCarbonOffsetTx = await carbonOffset.purchase({
-                          //   value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
-                          // });
-                          // debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
-                          // purchaseCarbonOffsetTx.wait();
+                          debug.log("Sponsor: purchaseCarbonOffset");
+                          const purchaseCarbonOffsetTx = await carbonOffset.purchase({
+                            value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
+                          });
+                          debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
+                          purchaseCarbonOffsetTx.wait();
 
-                          // debug.log("Sponsor: verifyCarbonOffsetTxAndCreateCO2StorageData");
-                          // const response = await fetch("/api/verifyCarbonOffsetTxAndCreateCO2StorageData", {
-                          //   method: "POST",
-                          //   headers: {
-                          //     "Content-Type": "application/json",
-                          //   },
-                          //   body: JSON.stringify({ hash: purchaseCarbonOffsetTx.hash, grantId }),
-                          // });
-                          // if (!response.ok) {
-                          //   throw new Error("Network response was not ok");
-                          // }
-                          // const {
-                          //   result: { assetId },
-                          // } = await response.json();
-                          // debug.log("CO2 Storage Asset ID", assetId);
-                          const assetId = "assetId";
+                          debug.log("Sponsor: verifyCarbonOffsetTxAndCreateCO2StorageData");
+                          const response = await fetch("/api/verifyCarbonOffsetTxAndCreateCO2StorageData", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ hash: purchaseCarbonOffsetTx.hash, grantId }),
+                          });
+                          if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                          }
+                          const {
+                            result: { assetId },
+                          } = await response.json();
+                          debug.log("CO2 Storage Asset ID", assetId);
 
                           const sdk = await import("@hypercerts-org/sdk");
                           const { formatHypercertData, TransferRestrictions } = sdk;
@@ -731,10 +731,10 @@ export default function Home() {
                           );
                           debug.log("hyperCertMintClaimTx.hash", hyperCertMintClaimTx.hash);
                           await hyperCertMintClaimTx.wait();
-                          // console.log("Sponsor: setPoolActive");
-                          // const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
-                          // debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
-                          // await setPoolActiveToFalseTx.wait();
+                          console.log("Sponsor: setPoolActive");
+                          const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
+                          debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
+                          await setPoolActiveToFalseTx.wait();
 
                           setIsSubmissionReviewed(true);
                           setModalTitle("Submission Approved");
@@ -869,6 +869,15 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-semibold text-white">Drip Address (Optional)</p>
+                      <input
+                        value={dripAddress}
+                        onChange={(e) => setDripAddress(e.target.value)}
+                        placeholder="Team Name"
+                        className="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-purple-600 focus:outline-none text-sm"
+                      />
+                    </div>
                     <button
                       className="w-full px-6 py-3 rounded-lg bg-purple-600 text-white disabled:opacity-25 disabled:cursor-not-allowed enabled:hover:bg-purple-700"
                       onClick={async () => {
@@ -879,6 +888,9 @@ export default function Home() {
                           return;
                         }
                         try {
+                          if (dripAddress && grantToken === "ETH") {
+                            throw new Error("Drip address can only be used with ERC20 tokens, sorry!");
+                          }
                           debug.start();
                           debug.log(`Applicant: ${userAddress}`);
                           debug.log("Applicant: createProfile");
@@ -942,7 +954,12 @@ export default function Home() {
                             // Encode data for (address recipientId, address recipientAddress, uint256 grantAmount, Metadata metadata)
                             ethers.utils.defaultAbiCoder.encode(
                               ["address", "address", "uint256", "tuple(uint256, string)"],
-                              [applicantAlloAnchorAddress, userAddress, 0, [1, registerRecipientMetadtaCID]],
+                              [
+                                applicantAlloAnchorAddress,
+                                dripAddress ? dripAddress : userAddress, // here user can use drip address as recipient address
+                                0,
+                                [1, registerRecipientMetadtaCID],
+                              ],
                             ),
                           );
                           debug.log("registerRecipientTx.hash", registerRecipientTx.hash);
