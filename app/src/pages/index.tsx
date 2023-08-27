@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-
 import { useAllo } from "@/hooks/useAllo";
 import { useCarbonOffset } from "@/hooks/useCarbonOffset";
 import { useToast } from "@/hooks/useToast";
@@ -10,11 +9,20 @@ import { useAccount } from "wagmi";
 import { ethers } from "ethers";
 import { useDebug } from "@/hooks/useDebug";
 import { utils } from "@/lib/allo";
-
 import { useHyperCert } from "@/hooks/useHyperCert";
-
 import { Web3Storage } from "web3.storage";
+
 const web3StorageClient = new Web3Storage({ token: process.env.NEXT_PUBLIC_WEB3_STORAGE_API_KEY || "" });
+
+const symbolToAddress = {
+  ETH: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+  BAT: "0x70cBa46d2e933030E2f274AE58c951C800548AeF",
+} as any;
+
+const addressToSymbol = {
+  "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE": "ETH",
+  "0x70cBa46d2e933030E2f274AE58c951C800548AeF": "BAT",
+} as any;
 
 export default function Home() {
   const {
@@ -113,21 +121,96 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (!alloCoreContract || !grantId || !applicantId) {
+    if (!alloCoreContract || !alloRegistryContract || !grantId) {
       return;
     }
-    alloCoreContract.getPool(grantId).then((pool) => {
-      const directGrantsSimpleStrategy = attachDirectGrantsSimpleStrategy(pool.strategy);
-      directGrantsSimpleStrategy.getRecipientStatus(applicantId).then((status) => {
-        setIsApplicationReviewed(status === utils.STATUS.ACCEPTED);
-      });
-      directGrantsSimpleStrategy.getMilestones(applicantId).then((milestones) => {
-        if (milestones.length > 0) {
-          setIsSubmitted(milestones[0].milestoneStatus === utils.STATUS.PENDING);
-          setIsSubmissionReviewed(milestones[0].milestoneStatus === utils.STATUS.ACCEPTED);
+    alloCoreContract
+      .getPool(grantId)
+      .then((pool) => {
+        setGrantToken(addressToSymbol[pool.token]);
+        const directGrantsSimpleStrategy = attachDirectGrantsSimpleStrategy(pool.strategy);
+        // Assume all metadata is stored with protocol 1 == ipfs, and has metadata.json in root
+        fetch(`https://${pool.metadata.pointer}.ipfs.dweb.link/metadata.json`)
+          .then(async (data) => {
+            const { grantName, grantDescription, grantAmount } = await data.json();
+            if (grantName) {
+              setGrantName(grantName);
+            }
+            if (grantDescription) {
+              setGrantDescription(grantDescription);
+            }
+            if (grantAmount) {
+              setGrantAmount(grantAmount);
+            }
+            if (isCarbonOffsetEnabled !== undefined) {
+              setIsCarbonOffsetEnabled(isCarbonOffsetEnabled);
+            }
+          })
+          .catch((e) => {
+            console.log(e.message);
+          });
+        if (!applicantId) {
+          return;
         }
+        directGrantsSimpleStrategy
+          .getRecipient(applicantId)
+          .then((recipient) => {
+            fetch(`https://${recipient.metadata.pointer}.ipfs.dweb.link/metadata.json`)
+              .then(async (res) => {
+                const data = await res.json();
+                const { teamName, teamDescription, teamMembers } = data;
+                if (teamName) {
+                  setTeamName(teamName);
+                }
+                if (teamDescription) {
+                  setTeamDescription(teamDescription);
+                }
+                if (teamMembers) {
+                  setTeamMembers(teamMembers);
+                }
+                console.log("data", data);
+              })
+              .catch((e) => {
+                console.log(e.message);
+              });
+          })
+          .catch((e) => {
+            console.log(e.message);
+          });
+        directGrantsSimpleStrategy
+          .getRecipientStatus(applicantId)
+          .then((status) => {
+            setIsApplicationReviewed(status === utils.STATUS.ACCEPTED);
+          })
+          .catch((e) => {
+            console.log(e.message);
+          });
+        directGrantsSimpleStrategy
+          .getMilestones(applicantId)
+          .then((milestones) => {
+            if (milestones.length > 0) {
+              setIsSubmitted(milestones[0].milestoneStatus === utils.STATUS.PENDING);
+              setIsSubmissionReviewed(milestones[0].milestoneStatus === utils.STATUS.ACCEPTED);
+              fetch(`https://${milestones[0].metadata.pointer}.ipfs.dweb.link/metadata.json`)
+                .then(async (res) => {
+                  const data = await res.json();
+                  const { referenceURL } = data;
+                  if (referenceURL) {
+                    setReferenceURL(referenceURL);
+                  }
+                })
+                .catch((e) => {
+                  console.log(e.message);
+                });
+            }
+          })
+          .catch((e) => {
+            console.log(e.message);
+          });
+      })
+      .catch((e) => {
+        console.log(e.message);
       });
-    });
   }, [alloCoreContract, grantId, applicantId]);
 
   useEffect(() => {
@@ -326,7 +409,7 @@ export default function Home() {
                           onChange={() => setIsCarbonOffsetEnabled(!isCarbonOffsetEnabled)}
                           className="form-checkbox bg-gray-800 border border-gray-700 focus:ring-purple-600 rounded"
                         />
-                        <span>Enable 10% Carbon Offset</span>
+                        <span>Enable 10% Carbon Offset 🌱</span>
                       </label>
                     </div>
                     <button
@@ -386,9 +469,12 @@ export default function Home() {
                           const createPoolMetadtaCID = await web3StorageClient.put([
                             new File(
                               [
-                                new Blob([JSON.stringify({ grantName, grantDescription })], {
-                                  type: "application/json",
-                                }),
+                                new Blob(
+                                  [JSON.stringify({ grantName, grantDescription, grantAmount, isCarbonOffsetEnabled })],
+                                  {
+                                    type: "application/json",
+                                  },
+                                ),
                               ],
                               "metadata.json",
                             ),
@@ -399,7 +485,7 @@ export default function Home() {
                             directGrantsSimpleStrategy.address,
                             // Encode data for (bool _registryGating, bool _metadataRequired, bool _grantAmountRequired)
                             ethers.utils.defaultAbiCoder.encode(["bool", "bool", "bool"], [true, true, false]),
-                            "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                            symbolToAddress[grantToken],
                             ethers.utils.parseEther(grantAmount),
                             { protocol: 1, pointer: createPoolMetadtaCID },
                             [],
@@ -434,18 +520,40 @@ export default function Home() {
                   <h1 className="text-4xl font-semibold mb-6 text-white">Review Application</h1>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Name</h2>
-                      <p className="text-white">{teamName}</p>
+                      <h2 className="text-xl font-semibold text-white">Grant Name</h2>
+                      <p className="text-sm text-white">{grantName}</p>
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Description</h2>
-                      <p className="text-white">{teamDescription}</p>
+                      <h2 className="text-xl font-semibold text-white">Grant Description</h2>
+                      <p className="text-sm text-white">{grantDescription}</p>
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Members</h2>
+                      <h2 className="text-xl font-semibold text-white">Grant Amount</h2>
+                      <p className="text-sm text-white">
+                        {grantAmount} {grantToken}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Strategy</h2>
+                      <p className="text-sm text-white">{grantStrategy}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">10% Carbon Offset Enabled 🌱</h2>
+                      <p className="text-sm text-white">{isCarbonOffsetEnabled.toString()}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Team Name</h2>
+                      <p className="text-sm text-white">{teamName}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Team Description</h2>
+                      <p className="text-sm text-white">{teamDescription}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-sm text-xl font-semibold text-white">Team Members</h2>
                       <ul>
                         {teamMembers.map((member, index) => (
-                          <li key={index} className="text-white">
+                          <li key={index} className="text-sm text-white">
                             {member}
                           </li>
                         ))}
@@ -499,26 +607,26 @@ export default function Home() {
                   <h1 className="text-4xl font-semibold mb-6 text-white">Review Submission</h1>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Name</h2>
-                      <p className="text-white">{teamName}</p>
+                      <h2 className="text-xl font-semibold text-white">Team Name</h2>
+                      <p className="text-sm text-white">{teamName}</p>
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Description</h2>
-                      <p className="text-white">{teamDescription}</p>
+                      <h2 className="text-xl font-semibold text-white">Team Description</h2>
+                      <p className="text-sm text-white">{teamDescription}</p>
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Team Members</h2>
+                      <h2 className="text-xl font-semibold text-white">Team Members</h2>
                       <ul className="list-disc pl-5">
                         {teamMembers.map((member, index) => (
-                          <li key={index} className="text-white">
+                          <li key={index} className="text-sm text-white">
                             {member}
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Reference URL</h2>
-                      <p>
+                      <h2 className="text-xl font-semibold text-white">Reference URL</h2>
+                      <p className="text-sm">
                         <a href={referenceURL} target="_blank" rel="noopener noreferrer" className="text-purple-600">
                           {referenceURL}
                         </a>
@@ -543,24 +651,20 @@ export default function Home() {
                           debug.start();
                           debug.log(`Sponsor: ${userAddress}`);
                           debug.log("Sponsor: distribute");
-                          // const distributeTx = await alloCoreContract.distribute(
-                          //   grantId,
-                          //   [applicantId],
-                          //   utils.NULL_BYTES,
-                          // );
-                          // debug.log("distributeTx.hash", distributeTx.hash);
-                          // await distributeTx.wait();
+                          const distributeTx = await alloCoreContract.distribute(
+                            grantId,
+                            [applicantId],
+                            utils.NULL_BYTES,
+                          );
+                          debug.log("distributeTx.hash", distributeTx.hash);
+                          await distributeTx.wait();
 
-                          // debug.log("Sponsor: purchaseCarbonOffset");
-                          // const purchaseCarbonOffsetTx = await carbonOffset.purchase({
-                          //   value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
-                          // });
-                          // debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
-                          // purchaseCarbonOffsetTx.wait();
-
-                          const purchaseCarbonOffsetTx = {
-                            hash: "hash",
-                          };
+                          debug.log("Sponsor: purchaseCarbonOffset");
+                          const purchaseCarbonOffsetTx = await carbonOffset.purchase({
+                            value: ethers.utils.parseEther(grantAmount).mul(10).div(100),
+                          });
+                          debug.log("purchaseCarbonOffsetTx.hash", purchaseCarbonOffsetTx.hash);
+                          purchaseCarbonOffsetTx.wait();
 
                           debug.log("Sponsor: verifyCarbonOffsetTxAndCreateCO2StorageData");
                           const response = await fetch("/api/verifyCarbonOffsetTxAndCreateCO2StorageData", {
@@ -611,15 +715,15 @@ export default function Home() {
                           );
                           debug.log("hyperCertMintClaimTx.hash", hyperCertMintClaimTx.hash);
                           await hyperCertMintClaimTx.wait();
-                          // console.log("Sponsor: setPoolActive");
-                          // const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
-                          // debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
-                          // await setPoolActiveToFalseTx.wait();
+                          console.log("Sponsor: setPoolActive");
+                          const setPoolActiveToFalseTx = await directGrantsSimpleStrategy.setPoolActive(false);
+                          debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
+                          await setPoolActiveToFalseTx.wait();
 
-                          // setIsSubmissionReviewed(true);
-                          // setModalTitle("Submission Approved");
-                          // setModalDescription("The submission has been approved successfully!");
-                          // setIsModalOpen(true);
+                          setIsSubmissionReviewed(true);
+                          setModalTitle("Submission Approved");
+                          setModalDescription("The submission has been approved successfully!");
+                          setIsModalOpen(true);
                         } catch (e: any) {
                           console.log(e);
                           // showToast({ message: e.message });
@@ -683,6 +787,28 @@ export default function Home() {
                   <h1 className="text-4xl font-semibold mb-6 text-white">Apply for Grant</h1>
                   <div className="space-y-6">
                     <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Name</h2>
+                      <p className="text-sm text-white">{grantName}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Description</h2>
+                      <p className="text-sm text-white">{grantDescription}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Amount</h2>
+                      <p className="text-sm text-white">
+                        {grantAmount} {grantToken}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Strategy</h2>
+                      <p className="text-sm text-white">{grantStrategy}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">10% Carbon Offset Enabled 🌱</h2>
+                      <p className="text-sm text-white">{isCarbonOffsetEnabled.toString()}</p>
+                    </div>
+                    <div className="space-y-2">
                       <p className="text-xl font-semibold text-white">Team Name</p>
                       <input
                         value={teamName}
@@ -740,7 +866,6 @@ export default function Home() {
                           debug.start();
                           debug.log(`Applicant: ${userAddress}`);
                           debug.log("Applicant: createProfile");
-
                           const createProfileMetadtaCID = await web3StorageClient.put([
                             new File(
                               [
@@ -759,7 +884,7 @@ export default function Home() {
                             "Applicant Profile",
                             { protocol: 1, pointer: createProfileMetadtaCID },
                             userAddress,
-                            [],
+                            teamMembers,
                           );
                           debug.log("createApplicantProfileTx.hash", createApplicantProfileTx.hash);
                           const createApplicantProfileReceipt = await createApplicantProfileTx.wait();
@@ -777,9 +902,20 @@ export default function Home() {
                           const registerRecipientMetadtaCID = await web3StorageClient.put([
                             new File(
                               [
-                                new Blob([JSON.stringify({ teamName, teamDescription, teamMembers })], {
-                                  type: "application/json",
-                                }),
+                                new Blob(
+                                  [
+                                    JSON.stringify({
+                                      teamName,
+                                      teamDescription,
+                                      teamMembers: !teamMembers.includes(userAddress)
+                                        ? [userAddress, ...teamMembers]
+                                        : [userAddress],
+                                    }),
+                                  ],
+                                  {
+                                    type: "application/json",
+                                  },
+                                ),
                               ],
                               "metadata.json",
                             ),
@@ -823,7 +959,47 @@ export default function Home() {
                   <h1 className="text-4xl font-semibold mb-6 text-white">Submit to Grant</h1>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold text-white">Reference URL</h2>
+                      <h2 className="text-xl font-semibold text-white">Grant Name</h2>
+                      <p className="text-sm text-white">{grantName}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Description</h2>
+                      <p className="text-sm text-white">{grantDescription}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Amount</h2>
+                      <p className="text-sm text-white">
+                        {grantAmount} {grantToken}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Grant Strategy</h2>
+                      <p className="text-sm text-white">{grantStrategy}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">10% Carbon Offset Enabled 🌱</h2>
+                      <p className="text-sm text-white">{isCarbonOffsetEnabled.toString()}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Team Name</h2>
+                      <p className="text-sm text-white">{teamName}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Team Description</h2>
+                      <p className="text-sm text-white">{teamDescription}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-sm text-xl font-semibold text-white">Team Members</h2>
+                      <ul>
+                        {teamMembers.map((member, index) => (
+                          <li key={index} className="text-sm text-white">
+                            {member}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-semibold text-white">Reference URL</h2>
                       <input
                         value={referenceURL}
                         onChange={(e) => setReferenceURL(e.target.value)}
