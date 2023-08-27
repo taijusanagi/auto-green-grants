@@ -6,6 +6,7 @@ export function useDebug() {
 
   const debug = {
     start: () => {
+      setLogs([]);
       setIsDebugStarted(true);
     },
     log: (...messages: string[]) => {
@@ -14,7 +15,6 @@ export function useDebug() {
     },
     end: () => {
       setIsDebugStarted(false);
-      setLogs([]);
     },
   };
 

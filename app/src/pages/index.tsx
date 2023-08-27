@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useEffect, useState } from "react";
-import { FaSpinner } from "react-icons/fa";
+import { FaCheck, FaSpinner } from "react-icons/fa";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAllo } from "@/hooks/useAllo";
 import { useCarbonOffset } from "@/hooks/useCarbonOffset";
@@ -509,6 +509,7 @@ export default function Home() {
                           const createPoolRecipt = await createPoolTx.wait();
                           const grantId = createPoolRecipt.events?.[createPoolRecipt.events.length - 1].args?.poolId;
                           debug.log("grantId", grantId);
+                          debug.log("DONE!");
                           setGrantId(grantId);
                           setModalTitle("Grant Created");
                           setModalDescription("Your grant has been created successfully!");
@@ -596,6 +597,7 @@ export default function Home() {
                           );
                           debug.log("allocateTx.hash", allocateTx.hash);
                           await allocateTx.wait();
+                          debug.log("DONE!");
                           setIsApplicationReviewed(true);
                           setModalTitle("Application Confirmed");
                           setModalDescription("You've successfully confirmed the application!");
@@ -736,6 +738,7 @@ export default function Home() {
                           debug.log("setPoolActiveToFalseTx.hash", setPoolActiveToFalseTx.hash);
                           await setPoolActiveToFalseTx.wait();
 
+                          debug.log("DONE!");
                           setIsSubmissionReviewed(true);
                           setModalTitle("Submission Approved");
                           setModalDescription("The submission has been approved successfully!");
@@ -968,6 +971,7 @@ export default function Home() {
 
                           const applicationId = `${grantId}:${applicantAlloAnchorAddress}`;
                           debug.log("applicationId", applicationId);
+                          debug.log("DONE!");
                           setApplicantId(applicantAlloAnchorAddress);
                           setApplicationId(applicationId);
                           setModalTitle("Application Submitted");
@@ -1095,8 +1099,9 @@ export default function Home() {
                             },
                           );
                           await submitMilestoneTx.wait();
-
                           const submissionId = `${grantId}:${applicantId}:${milestoneId}`;
+                          debug.log("submissionId", submissionId);
+                          debug.log("DONE!");
                           setIsSubmitted(true);
                           setMilestoneId(milestoneId);
                           setSubmissionId(submissionId);
@@ -1122,9 +1127,19 @@ export default function Home() {
       {isModalOpen && (
         <div className="fixed z-50 top-0 left-0 w-full h-full flex justify-center items-center">
           <div className="bg-black bg-opacity-75 absolute w-full h-full" onClick={closeModal}></div>
-          <div className="bg-gradient-to-br from-gray-700 to-gray-950 px-8 py-6 rounded-lg shadow-2xl w-full max-w-md z-10 space-y-4">
+          <div className="bg-gradient-to-br from-gray-700 to-gray-950 px-8 py-6 rounded-lg shadow-2xl w-full max-w-3xl z-10 space-y-4">
             <h2 className="text-2xl font-semibold text-white">{modalTitle}</h2>
             <p className="text-white">{modalDescription}</p>
+            <div className="w-full bg-black p-4 rounded-lg shadow-2xl break-all">
+              <div className="flex justify-between items-center text-white text-sm align-left mb-2">{"Logs"}</div>
+              {logs.map((log, i) => {
+                return (
+                  <p key={`log_${i}`} className="text-green-600 text-xs align-left">
+                    {`>> ${log}`}
+                  </p>
+                );
+              })}
+            </div>
             <button className="w-full p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700" onClick={closeModal}>
               Close
             </button>
