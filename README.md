@@ -49,3 +49,27 @@ Coming Soon!
 ### BAT
 
 - **Payment Token:** The BAT token has been integrated and is used as the platform's payment token.
+
+## Tx Reference
+
+### Payout with Allo
+
+https://goerli.etherscan.io/tx/0xb5638bb691c93e9706c2bf7051c2c640335274e0d417cca9dd2004c24a529ff9
+
+### Purchase Carbon Credit
+
+https://goerli.etherscan.io/tx/0x34f4896054522940ecb8a3dff82d392689bd04039fb0835f168112fe075e3c6a
+
+### Mint Hypercert
+
+https://goerli.etherscan.io/tx/0x3d48d325b8c94c99ec61f1c25eebdb03cd7b0b528b87946fc128b9a9e86ce78a
+
+## Other Reference
+
+### CO2 Storage Asset ID
+
+bafyreihhflkfkucyqtxy7uremqutlj4tokni4l46twqzxorvudwoylhq7q
+
+### Minted Hypercert
+
+https://testnet.hypercerts.org/app/view#claimId=0x822f17a9a5eecfd66dbaff7946a8071c265d1d07-4147361488032397992691609715378390961225728
