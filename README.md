@@ -32,6 +32,22 @@ https://youtu.be/3Y7JkqFiOgw
 - **Functionality:** AutoGreenGrants is built on the Allo Protocol. This protocol manages various tasks such as profile creation, pool establishment, registration, reviewing, and the entire life cycle of the grant payout.
 - **Carbon Credit Integration:** We've incorporated the purchase of carbon credits into Allo Protocol's `DirectGrantsSimpleStrategy`. A designated portion of the grant payout is automatically directed to the Carbon Credit provider.
 
+#### PoC of Allo Protocol
+
+https://github.com/taijusanagi/auto-green-grants/blob/main/contracts/test/Allo.ts
+
+#### Implementation in UI
+
+##### Read
+
+https://github.com/taijusanagi/auto-green-grants/blob/main/app/src/pages/index.tsx#L131
+
+##### Write
+
+Each button action at
+
+https://github.com/taijusanagi/auto-green-grants/blob/main/app/src/pages/index.tsx
+
 ### CO2.Storage and IPFS
 
 - **Carbon Credit Data Storage:** When purchasing carbon credits, the transactional data—comprising the hash and pool info—is securely stored in CO2.Storage. This allows for transparent tracking of the positive environmental impacts contributed by participants.
