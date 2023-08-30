@@ -44,7 +44,9 @@ https://youtu.be/3Y7JkqFiOgw
 
 ### Drip
 
-- **Team Payout Distribution:** AutoGreenGrants has integrated Drip to facilitate the equitable distribution of payouts among team members.
+- **Team Payout Distribution:** AutoGreenGrants has integrated Drip to facilitate the equitable distribution of payouts among team members. User can input drip smart contract address as Allo protocol's recipient.
+
+- **Hypercert Integration** The Hypercert attestation is sent to contributers so if contributers enabled Drip recipient in the application, the Hypercert is sent to the Drip List members.
 
 ### BAT
 
