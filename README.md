@@ -75,3 +75,7 @@ https://co2.storage/assets/bafyreihhflkfkucyqtxy7uremqutlj4tokni4l46twqzxorvudwo
 ### Minted Hypercert
 
 https://testnet.hypercerts.org/app/view#claimId=0x822f17a9a5eecfd66dbaff7946a8071c265d1d07-4147361488032397992691609715378390961225728
+
+## Disclaimer
+
+- Drip and BAT is integrated in frontend, but not tested well because of the Testnet limitation.
