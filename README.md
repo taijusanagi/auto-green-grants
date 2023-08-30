@@ -38,14 +38,6 @@ https://github.com/taijusanagi/auto-green-grants/blob/main/contracts/test/Allo.t
 
 #### Implementation in UI
 
-##### Read
-
-https://github.com/taijusanagi/auto-green-grants/blob/main/app/src/pages/index.tsx#L131
-
-##### Write
-
-Each button action at
-
 https://github.com/taijusanagi/auto-green-grants/blob/main/app/src/pages/index.tsx
 
 ### CO2.Storage and IPFS
