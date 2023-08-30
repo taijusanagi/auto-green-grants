@@ -21,7 +21,7 @@ https://docs.google.com/presentation/d/17jKICQBJbGnaEfGOp6Mx8G_FzpP4d6v-yA-tHc5f
 
 ## Demo Video
 
-Coming Soon!
+https://youtu.be/3Y7JkqFiOgw
 
 ## How It Works
 
