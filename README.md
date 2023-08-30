@@ -68,7 +68,7 @@ https://goerli.etherscan.io/tx/0x3d48d325b8c94c99ec61f1c25eebdb03cd7b0b528b87946
 
 ### CO2 Storage Asset ID
 
-bafyreihhflkfkucyqtxy7uremqutlj4tokni4l46twqzxorvudwoylhq7q
+https://co2.storage/assets/bafyreihhflkfkucyqtxy7uremqutlj4tokni4l46twqzxorvudwoylhq7q
 
 ### Minted Hypercert
 
